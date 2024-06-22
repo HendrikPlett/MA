@@ -1,0 +1,9 @@
+# System 
+*.pyc
+*.__pycache__/
+
+# OS-specific 
+*.DS_Store
+
+# Test files
+test.ipynb
