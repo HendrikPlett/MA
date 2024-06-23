@@ -6,9 +6,9 @@ import pandas as pd
 # Third party
 
 # Own
-from algorithms import Algorithm
-from util import same_columns, bootstrap_sample
-from causal_inference_task import CausalInferenceTask
+from .algorithms import Algorithm
+from .util import same_columns, bootstrap_sample
+from .causal_inference_task import CausalInferenceTask
 
 class Bootstrap():
 

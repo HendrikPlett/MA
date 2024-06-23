@@ -5,9 +5,9 @@ from typing import Iterable
 # Third party
 
 # Own
-from algorithms import Algorithm
-from bootstrap import Bootstrap
-from util import give_superlist, same_order
+from .algorithms import Algorithm
+from .bootstrap import Bootstrap
+from .util import give_superlist, same_order
 
 
 class BootstrapComparison:

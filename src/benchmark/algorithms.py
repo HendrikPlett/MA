@@ -4,8 +4,8 @@ from typing import Tuple
 import pandas as pd
 
 # Own 
-from dictable import Dictable
-from util import pool_dfs, measure_time
+from .dictable import Dictable
+from .util import pool_dfs, measure_time
 
 # Third party
 import ges
@@ -20,15 +20,17 @@ class Algorithm(ABC):
         """Used to store hyperparameters"""
         for key, value in kwargs.items():
             setattr(self, key, value)
-
+    
     @abstractmethod
     def fit(self, data: Tuple[pd.DataFrame, ...]) -> Tuple[float, pd.DataFrame]:
         """
-        Fits the algorithm to the passed data
+        Fits the respective algorithm to the passed data.
 
         Args:
             data (tuple[pd.DataFrame]): The data to fit the algorithm to.
-                Each dataframe must have 
+                Each DataFrame has variables as columns and observations as 
+                rows. The column names must be equal and in the same order 
+                across all DataFrames.
 
         Returns:
             tuple[float, pd.DataFrame]: Runtime and estimated binary 
@@ -40,7 +42,6 @@ class Algorithm(ABC):
 #------------------------------------------------------
 # Algorithm implementations
 
-
 class PC(Algorithm):
     # Use Causal-Learn implementation
     pass
@@ -48,6 +49,7 @@ class PC(Algorithm):
 class GES(Algorithm):
 
     def __init__(self):
+        """ No hyperparameters to pass for GES. """
         super.__init__(
             name=self.__class__.__name__
         )

@@ -1,0 +1,2 @@
+
+print("Initializing benchmark package.")

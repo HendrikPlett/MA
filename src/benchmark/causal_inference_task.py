@@ -8,8 +8,8 @@ from CausalDisco.analytics import var_sortability, r2_sortability
 from sempler.utils import all_dags
 
 # Own
-from algorithms import Algorithm
-from util import same_columns, pool_dfs
+from .algorithms import Algorithm
+from .util import same_columns, pool_dfs
 
 class CausalInferenceTask:
     
