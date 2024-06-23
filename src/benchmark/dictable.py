@@ -5,8 +5,9 @@ class Dictable(ABC):
     def __init__(self):
         pass
 
+    @abstractmethod
     def to_dict(self):
-        return self.__dict__
+        pass 
     
     @abstractmethod
     def from_dict(self):
