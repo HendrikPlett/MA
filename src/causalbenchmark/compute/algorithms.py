@@ -5,7 +5,7 @@ import pandas as pd
 
 # Own 
 from .dictable import Dictable
-from .util import pool_dfs, measure_time
+from ..util import pool_dfs, measure_time
 
 # Third party
 import ges
@@ -16,13 +16,12 @@ import ges
 class Algorithm(ABC):
     """Abstract class where all Causal Inference algorithms inherit from"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, alg_name: str):
         """Used to store hyperparameters"""
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        self._alg_name = alg_name
     
     @abstractmethod
-    def fit(self, data: Tuple[pd.DataFrame, ...]) -> Tuple[float, pd.DataFrame]:
+    def fit(self, data: Tuple[pd.DataFrame, ...]) -> Tuple[pd.DataFrame, float]:
         """
         Fits the respective algorithm to the passed data.
 
@@ -50,12 +49,12 @@ class GES(Algorithm):
 
     def __init__(self):
         """ No hyperparameters to pass for GES. """
-        super.__init__(
-            name=self.__class__.__name__
+        super().__init__(
+            alg_name=self.__class__.__name__
         )
 
     @measure_time
-    def fit(self, data: Tuple[pd.DataFrame, ...]) -> Tuple[float, pd.DataFrame]:
+    def fit(self, data: Tuple[pd.DataFrame, ...]) -> Tuple[pd.DataFrame, float]:
         pooled_data = pool_dfs(data)
         est_adj_mat, _ = ges.fit_bic(
             data=pooled_data.values,

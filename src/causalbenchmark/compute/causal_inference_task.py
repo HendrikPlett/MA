@@ -9,7 +9,7 @@ from sempler.utils import all_dags
 
 # Own
 from .algorithms import Algorithm
-from .util import same_columns, pool_dfs
+from ..util import same_columns, pool_dfs
 
 class CausalInferenceTask:
     

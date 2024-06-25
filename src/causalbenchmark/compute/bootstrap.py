@@ -7,7 +7,7 @@ import pandas as pd
 
 # Own
 from .algorithms import Algorithm
-from .util import same_columns, bootstrap_sample, give_superlist, same_order
+from ..util import same_columns, bootstrap_sample, give_superlist, same_order
 from .causal_inference_task import CausalInferenceTask
 
 class Bootstrap():
@@ -37,7 +37,7 @@ class Bootstrap():
         self._sample_sizes = sample_sizes
         self._nr_bootstraps = nr_bootstraps
         self._true_dag = true_dag
-        # --- Provided implicitely
+        # --- Provided implicitly
         self._bootstrap_variables = true_dag.columns.to_list()
         # --- Computed later
         self._causal_inference_tasks = None
@@ -135,26 +135,10 @@ class BootstrapComparison:
         self._all_var = None
         self._all_var_true_dag = None
 
-    def add_bootstrap(self, 
-                    bootstrap_name: str, 
-                    algorithm: Algorithm,
-                    data_to_bootstrap_from: Iterable[pd.DataFrame], 
-                    sample_sizes: tuple, 
-                    nr_bootstraps: int,
-                    true_dag: pd.DataFrame):
-        
-        # Create and add Bootstrap instance
-        self._bootstraps.append(
-                Bootstrap(
-                    bootstrap_name=bootstrap_name, 
-                    algorithm=algorithm,
-                    data_to_bootstrap_from=data_to_bootstrap_from, 
-                    sample_sizes=sample_sizes,
-                    nr_bootstraps=nr_bootstraps,
-                    true_dag=true_dag
-                )
-            )
-        
+    def add_bootstrap(self, bstrp: Bootstrap):
+
+        self._bootstraps.append(bstrp)
+        self._check_variable_validity()
         self._update_variables()
         
     def run_comparison(self):
@@ -178,29 +162,28 @@ class BootstrapComparison:
                 comparison_plot_dict[attr_name] = attr_value
 
         return comparison_plot_dict
-
-    def _update_variables(self):
-        
-        # Comparison only possible if two bootstraps have been added
-        if len(self._bootstraps) >= 2:
+    
+    def _check_variable_validity(self):
+        # Comparison only possible if >= 2 bootstraps have been added
+        if len(self._bootstraps) < 2:
+            return
             
-            # Only addition of variables is allowed 
-            if not self._bootstraps[-1].get_bootstrap_variables() == give_superlist(
-                    first=self._bootstraps[-2].get_bootstrap_variables(),
-                    second=self._bootstraps[-1].get_bootstrap_variables()):
-                raise ValueError("Only addition of variables is allowed from one \
-                                 bootstrap to the next, not removal")
+        # Only addition of variables is allowed 
+        if not self._bootstraps[-1].get_bootstrap_variables() == give_superlist(
+                first=self._bootstraps[-2].get_bootstrap_variables(),
+                second=self._bootstraps[-1].get_bootstrap_variables()):
+            raise ValueError("Only addition of variables is allowed from one \
+                                bootstrap to the next, not removal")
 
-            # Variables must have the same order
-            if not same_order(
-                    first=self._bootstraps[-2].get_bootstrap_variables(),
-                    second=self._bootstraps[-1].get_bootstrap_variables()
-                    ):
-                raise ValueError("Variables must have same order from one \
-                                 bootstrap to the next.")
-                
-        # Update variables (latest bootstrap must have most variables)
+        # Variables must have the same order
+        if not same_order(
+                first=self._bootstraps[-2].get_bootstrap_variables(),
+                second=self._bootstraps[-1].get_bootstrap_variables()
+                ):
+            raise ValueError("Variables must have same order from one \
+                                bootstrap to the next.")
+
+    def _update_variables(self):          
+        # Latest bootstrap must have most variables
         self._all_var = self._bootstraps[-1].get_bootstrap_variables()
-            
-        # Update true DAG
         self._all_var_true_dag = self._bootstraps[-1].get_true_dag()
