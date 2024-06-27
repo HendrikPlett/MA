@@ -1,27 +1,45 @@
 import numpy as np
 import pandas as pd
 
-from ..util import (variables_increase, 
-                    enforce_binary_adj_mat, 
-                    enforce_valid_diff_adj_mat, 
-                    reduce_to_size)
+from .helper import AdjGraphs
+from ..util import is_sub_adj_mat, reduce_to_size, pad_zeros_to_size
 from .edgelogic import EdgeLogic
 from .edgelogic import all_p, tp, fp, tp_diff, fp_diff
+
+
+EDGE_THRESHOLD = 0.1
 
 
 class Edges:
 
     def __init__(self, 
-                 graph: pd.DataFrame, 
-                 true_graph: pd.DataFrame, 
-                 threshold: float = 0.1
+                 graphs: AdjGraphs,
+                 threshold: float = EDGE_THRESHOLD
                 ):
-        # Validity of input
-        enforce_binary_adj_mat(true_graph)
-        enforce_valid_diff_adj_mat(graph)
-        if not variables_increase(graph.columns.to_list(), true_graph.columns.to_list()):
-            raise ValueError("Variables do not increase.")
         
+        # Unpack graphs from AdjGraphs object
+        ref_graph = graphs.ref_graph
+        new_graph = graphs.new_graph
+        true_graph = graphs.true_graph
+
+        if is_sub_adj_mat(ref_graph, new_graph) & is_sub_adj_mat(new_graph, ref_graph):
+            # Same graphs passed -> Just take first
+            if not ref_graph.equals(new_graph):
+                raise ValueError(
+                    "If both graphs have equal variables, it must be exactly the same")
+            graph = ref_graph
+        elif is_sub_adj_mat(ref_graph, new_graph):
+            # Variable size increases
+            ref_graph_pad = pad_zeros_to_size(ref_graph, new_graph)
+            graph = new_graph - ref_graph_pad
+        elif is_sub_adj_mat(new_graph, ref_graph):
+            # Variable size decreses
+            new_graph_pad = pad_zeros_to_size(new_graph, ref_graph)
+            graph = new_graph_pad - ref_graph
+        else:
+            raise ValueError("Unclear Error with the passed graphs.")
+
+        # Instantiate self object
         self._graph = graph
         self._true_graph = true_graph
         self._threshold = threshold
