@@ -7,7 +7,7 @@ import pandas as pd
 
 # Own
 from .algorithms import Algorithm
-from ..util import same_columns, bootstrap_sample, give_superlist, same_order
+from ..util import same_columns, bootstrap_sample, give_superlist, same_order, variables_increase
 from .causal_inference_task import CausalInferenceTask
 
 class Bootstrap():
@@ -136,9 +136,9 @@ class BootstrapComparison:
         self._all_var_true_dag = None
 
     def add_bootstrap(self, bstrp: Bootstrap):
-
+        
+        self._check_variable_validity(bstrp)
         self._bootstraps.append(bstrp)
-        self._check_variable_validity()
         self._update_variables()
         
     def run_comparison(self):
@@ -163,22 +163,21 @@ class BootstrapComparison:
 
         return comparison_plot_dict
     
-    def _check_variable_validity(self):
-        # Comparison only possible if >= 2 bootstraps have been added
-        if len(self._bootstraps) < 2:
+    def _check_variable_validity(self, bstrp: Bootstrap):
+        # Comparison only possible if >= 1 bootstraps have been added
+        if len(self._bootstraps) < 1:
             return
             
         # Only addition of variables is allowed 
-        if not self._bootstraps[-1].get_bootstrap_variables() == give_superlist(
-                first=self._bootstraps[-2].get_bootstrap_variables(),
-                second=self._bootstraps[-1].get_bootstrap_variables()):
+        if not variables_increase(self._bootstraps[-1].get_bootstrap_variables(), 
+                                  bstrp.get_bootstrap_variables()):
             raise ValueError("Only addition of variables is allowed from one \
                                 bootstrap to the next, not removal")
 
         # Variables must have the same order
         if not same_order(
-                first=self._bootstraps[-2].get_bootstrap_variables(),
-                second=self._bootstraps[-1].get_bootstrap_variables()
+                first=self._bootstraps[-1].get_bootstrap_variables(),
+                second=bstrp.get_bootstrap_variables()
                 ):
             raise ValueError("Variables must have same order from one \
                                 bootstrap to the next.")
