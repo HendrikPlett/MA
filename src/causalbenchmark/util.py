@@ -122,23 +122,42 @@ def bootstrap_sample(datasets: Iterable[pd.DataFrame], sample_sizes: Iterable[Un
 #------------------------------------------------------
 # Adjacency matrix dataframe operations
 
+def is_sub_adj_mat(df: pd.DataFrame, larger_df: pd.DataFrame):
+    enforce_valid_adj_mat(df)
+    enforce_valid_adj_mat(larger_df)
+    if variables_increase(df.index.to_list(), larger_df.index.to_list()):
+        return True
+    else:
+        return False
+
+def enforce_sub_adj_mat(df: pd.DataFrame, larger_df: pd.DataFrame):
+    if not is_sub_adj_mat(df, larger_df):
+        raise ValueError("df is not sub matrix of larger_df.")
+
 def reduce_to_size(df: pd.DataFrame, reduce_to: pd.DataFrame):
     enforce_valid_adj_mat(df)
     enforce_valid_adj_mat(reduce_to)
+    enforce_sub_adj_mat(reduce_to, df)
     common_var = df.columns.intersection(reduce_to)
     df_reduced = df.loc[common_var, common_var]
     return df_reduced
+
+def pad_zeros_to_size(df: pd.DataFrame, pad_to: pd.DataFrame):
+    enforce_valid_adj_mat(df)
+    enforce_valid_adj_mat(pad_to)
+    enforce_sub_adj_mat(df, pad_to)
+    df_pad = df.reindex(
+        index=pad_to.index,
+        columns=pad_to.columns,
+        fill_value=0)
+    return df_pad
+
 
 def enforce_valid_bstr_adj_mat(graph: pd.DataFrame):
     enforce_valid_adj_mat(graph)
     if not ((graph >= 0) & (graph <= 1)).all().all():
         raise ValueError("Entries outside of [0,1].")
     
-def enforce_valid_diff_adj_mat(graph: pd.DataFrame):
-    enforce_valid_adj_mat(graph)
-    if not ((graph >= -1) & (graph <= 1)).all().all():
-        raise ValueError("Entries outside of [-1,1].")
-
 def enforce_binary_adj_mat(graph: pd.DataFrame):
     enforce_valid_adj_mat(graph)
     if not graph.isin([0,1]).all().all():
