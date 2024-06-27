@@ -186,3 +186,10 @@ class BootstrapComparison:
         # Latest bootstrap must have most variables
         self._all_var = self._bootstraps[-1].get_bootstrap_variables()
         self._all_var_true_dag = self._bootstraps[-1].get_true_dag()
+
+    def __len__(self):
+        return len(self._bootstraps)
+    
+    def __getitem__(self, index):
+        return self._bootstraps[index]
+        
