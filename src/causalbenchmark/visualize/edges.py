@@ -1,7 +1,10 @@
 import numpy as np
 import pandas as pd
 
-from ..util import give_sublist, same_columns
+from ..util import (variables_increase, 
+                    enforce_binary_adj_mat, 
+                    enforce_valid_diff_adj_mat, 
+                    reduce_to_size)
 from .edgelogic import EdgeLogic
 from .edgelogic import all_p, tp, fp, tp_diff, fp_diff
 
@@ -13,17 +16,21 @@ class Edges:
                  true_graph: pd.DataFrame, 
                  threshold: float = 0.1
                 ):
+        # Validity of input
+        enforce_binary_adj_mat(true_graph)
+        enforce_valid_diff_adj_mat(graph)
+        if not variables_increase(graph.columns.to_list(), true_graph.columns.to_list()):
+            raise ValueError("Variables do not increase.")
         
         self._graph = graph
         self._true_graph = true_graph
         self._threshold = threshold
         
-        self._check_entries()
-        self._check_consistency()
-
         # --- computed later
         self._edges = None
+        self._edge_weights = None
         self._edge_colors = None
+
 
     ###
     # Public API
@@ -43,41 +50,26 @@ class Edges:
     def comp_fp_diff(self):
         self._compute(logic=fp_diff) 
     
-    def get_edges(self):
+    @property
+    def edgesandcolors(self):
         assert len(self._edges) == len(self._edge_colors), \
             "Edges and Colors list differ in length."
-        return self._edges
-    
-    def get_colors(self):
-        assert len(self._edges) == len(self._edge_colors), \
-            "Edges and Colors list differ in length."
-        return self._edge_colors
-    
+        return (self._edges, self._edge_colors)
+        
     # Public API
     ###
 
-    def _check_entries(self):
-        in_range1 = ((self._graph >= -1) & (self._graph <= 1)).all().all()
-        in_range2 = ((self._graph >= 0) & (self._graph <= 1)).all().all()
-        if not (in_range1 and in_range2):
-            raise ValueError("The passed graphs have incorrect entries.")
-    
-    def _check_consistency(self):
-        bl = (self._graph == give_sublist(self._graph, self._true_graph))
-        if not bl:
-            raise ValueError("Graph is not a subset of true_graph variable wise.")
-        if not same_columns(self._true_graph, self._true_graph.transpose()):
-            raise ValueError("True graph has different rows and columns.")
-        if not same_columns(self._graph, self._graph.transpose()):
-            raise ValueError("Graph has different rows and columns.")
-
     def _compute(self, logic: EdgeLogic):
-        true_msk = logic.true_graph_comp(self._true_graph, 0)
+        # True graph is larger than graph
+        true_graph_red = reduce_to_size(self._true_graph, self._graph)
+        true_msk = logic.true_graph_comp(true_graph_red, 0)
+        
         graph_msk = logic.graph_comp(self._graph, self._threshold)
-        common_var = graph_msk.columns # graph variabes are subset of true_graph variables
-        total_msk = true_msk.loc[common_var, common_var] & graph_msk.loc[common_var, common_var]
+        total_msk = true_msk & graph_msk
+
         self._edges = [(total_msk.index[i], total_msk.columns[j]) for i,j in zip(*np.where(total_msk))]
-        self._weights = [float(self._true_graph.at[pos]) for pos in self._edges]
+        self._edge_weights = [float(self._true_graph.at[pos]) for pos in self._edges]
+        self._edge_colors = [logic.colormap(logic.normalizer(w)) for w in self._edge_weights]
 
 
 
