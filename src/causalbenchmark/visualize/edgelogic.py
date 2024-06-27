@@ -3,7 +3,11 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from  matplotlib.colors import LinearSegmentedColormap
 
-
+_COLMAP_ALL = plt.cm.Greys 
+_COLMAP_TP = plt.cm.Greens
+_COLMAP_FP = plt.cm.Reds
+_COLMAP_TP_DIFF = LinearSegmentedColormap.from_list('rg',["r", "w", "g"], N=256)
+_COLMAP_FP_DIFF = LinearSegmentedColormap.from_list('rg',["g", "w", "r"], N=256)
 
 _ZEROONE = mcolors.Normalize(vmin=0, vmax=1)
 _MINUSONEONE = mcolors.Normalize(vmin=-1, vmax=1)
@@ -46,27 +50,27 @@ class EdgeLogic:
 
 _all_p = EdgeLogic(graph_comp=gt,
                  true_graph_comp = true,
-                 colormap=plt.cm.Greys,
+                 colormap=_COLMAP_ALL,
                  normalizer=_ZEROONE)    
 
 _tp = EdgeLogic(graph_comp=gt,
                true_graph_comp=gt,
-               colormap=plt.cm.Greens, 
+               colormap=_COLMAP_TP, 
                normalizer=_ZEROONE)
 
 _fp = EdgeLogic(graph_comp=gt,
                true_graph_comp=eq,
-               colormap=plt.cm.Reds, 
+               colormap=_COLMAP_FP, 
                normalizer=_ZEROONE)
 
 _tp_diff = EdgeLogic(graph_comp=abs_gt,
                      true_graph_comp=gt,
-                     colormap=LinearSegmentedColormap.from_list('rg',["r", "w", "g"], N=256),
+                     colormap=_COLMAP_TP_DIFF,
                      normalizer=_MINUSONEONE)
 
 _fp_diff = EdgeLogic(graph_comp=abs_gt,
                      true_graph_comp=eq,
-                     colormap=LinearSegmentedColormap.from_list('rg',["g", "w", "r"], N=256),
+                     colormap=_COLMAP_FP_DIFF,
                      normalizer=_MINUSONEONE)
 
 ###
@@ -77,7 +81,3 @@ tp = _tp
 fp = _fp
 tp_diff = _tp_diff
 fp_diff = _fp_diff
-
-
-
-
