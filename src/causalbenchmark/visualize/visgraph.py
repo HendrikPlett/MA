@@ -1,80 +1,83 @@
 
 import matplotlib.axes
-import networkx
+import networkx as nx
 
-from .helper import AdjGraphs
 from .edges import Edges
 from .nodes import Nodes
 
+
 class VisGraph:
-    
+    """ Draws passed nodes and/or edges onto passed axeses."""
 
     def __init__(self, 
-                 graphs: AdjGraphs,
-                 title: str, 
-                 axeses: list[matplotlib.axes.Axes]
+                 nodes: Nodes,
+                 edges: Edges,
+                 ax_graph = matplotlib.axes.Axes,
+                 ax_legend = matplotlib.axes.Axes,
+                 title: str = ""
                  ):
         
         # --- Provided
-        self._graphs = graphs
+        self._nodes = nodes
+        self._edges = edges
+        self._ax_graph = ax_graph
+        self._ax_legend = ax_legend
         self._title = title
-        self._ax1, self._ax2, self._ax3 = axeses
-        # --- Computed later 
-        # Nodes/Variables
-        self._nds = None
-        self._core_var, self._diff_var, self._rest_var = [], [], []
-        self._core_col, self._diff_col, self._rest_col = [], [], []
-        # Edges
-        self._edgs = None
-        self._edges, self._edge_colors = [], []
+        
+        self._G = nx.DiGraph()
 
-    #------------------------------------------------------
-    # Computing nodes and edges
+    def draw_edges(self):
+        # Unpack 
+        edges, colors = self._edges.edgesandcolors
+        nx.draw_networkx_edges(G=self._G, 
+                                pos=self._nodes.positions, 
+                                edgelist=edges, 
+                                edge_color=colors,
+                                ax=self._ax_graph, 
+                                node_size = self._nodes.nodesize)
 
-    def comp_all_edges(self):
-        self._init_edges()
-        self._edgs.comp_all()
-        self._finalize_edges()
+    def draw_nodes(self):
+        # Unpack nodes/colors/visibility/sizes:
+        core_var, diff_var, rest_var = self._nodes.var_split
+        core_col, diff_col, rest_col = self._nodes.var_cols
+        vis, invis = self._nodes.visibility
 
-    def comp_tp_edges(self):
-        self._init_edges()
-        self._edgs.comp_tp()
-        self._finalize_edges()
+        common_kwargs = {'G': self._G,
+                         'pos': self._nodes.positions,
+                         'node_size': self._nodes.nodesize,
+                         'edgelist': [],
+                         'ax': self._ax_graph,
+                         'with_labels': False, 
+                         'arrows': True}
+        # Core nodes w/o label
+        nx.draw_networkx(nodelist=core_var,
+                        node_color=core_col,
+                        alpha=vis, 
+                        **common_kwargs)
+        # Diff nodes w/o label
+        nx.draw_networkx(nodelist=diff_var,
+                        node_color=diff_col,
+                        alpha=vis, 
+                        **common_kwargs)
+        # Rest nodes w/o label and invisible (alpha = 0)
+        nx.draw_networkx(nodelist=rest_var,
+                        node_color=rest_col,
+                        alpha=invis, 
+                        **common_kwargs)
+        
+        # Add labels of core and difference variables
+        if self._nodes.latex_transform is None:
+            lbs = {label: label for label in core_var+diff_var}
+        else:
+            lbs = {label: self._nodes.latex_transform(label) for label in core_var+diff_var}
 
-    def comp_fp_edges(self):
-        self._init_edges()
-        self._edgs.comp_all()
-        self._finalize_edges()
-
-    def comp_tp_diff_edges(self):
-        self._init_edges()
-        self._edgs.comp_all()
-        self._finalize_edges()
-
-    def comp_fp_diff_edges(self):
-        self._init_edges()
-        self._edgs.comp_all()
-        self._finalize_edges()
-
-    def comp_nodes(self):
-        nds = Nodes(self._graphs)
-        nds.compute_var_groups()
-        self._core_var, self._diff_var, self._rest_var = nds.var_split
-        self._core_col, self._diff_col, self._rest_col = nds.var_cols
-
-    #------------------------------------------------------
-    # Drawing nodes/edges onto the passed axeses
+        nx.draw_networkx_labels(G=self._G,
+                                pos=self._nodes.positions,
+                                labels = lbs,
+                                ax = self._ax_graph)
 
 
-    #------------------------------------------------------
-    # Private
-    
-    def _init_edges(self):
-        self._edgs = Edges(self._graphs)
-
-    def _finalize_edges(self):
-        self._edges, self._edge_colors = self._edgs.edgesandcolors
-
+    # Maybe need this later somewhere else 
     def _whiten_axes(self, ax: str):
         if hasattr(self, ax):
             axes = getattr(self, ax)
