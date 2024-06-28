@@ -76,8 +76,8 @@ _fp_diff = EdgeLogic(graph_comp=abs_gt,
 ###
 # Public API
 
-all_p = _all_p
-tp = _tp
-fp = _fp
-tp_diff = _tp_diff
-fp_diff = _fp_diff
+ALL_P = _all_p
+TP = _tp
+FP = _fp
+TP_DIFF = _tp_diff
+FP_DIFF = _fp_diff
