@@ -1,13 +1,20 @@
 import numpy as np
 import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
+import matplotlib.axes
 
 from .helper import AdjGraphs
+from .nodes import Nodes
 from ..util import is_sub_adj_mat, reduce_to_size, pad_zeros_to_size
 from .edgelogic import EdgeLogic
 from .edgelogic import ALL_P, TP, FP, TP_DIFF, FP_DIFF
 
 
-EDGE_THRESHOLD = 0.1
+_EDGE_THRESHOLD = 0.1
+_FONTSIZE = 12
+_TICK_LOC = "left"
+_LABEL_POS = "right"
 
 
 class Edges:
@@ -15,7 +22,7 @@ class Edges:
     def __init__(self, 
                  graphs: AdjGraphs,
                  logic: EdgeLogic,
-                 threshold: float = EDGE_THRESHOLD
+                 threshold: float = _EDGE_THRESHOLD
                 ):
         
         if not logic in (ALL_P, TP, FP, TP_DIFF, FP_DIFF):
@@ -44,39 +51,40 @@ class Edges:
         else:
             raise ValueError("Unclear Error with the passed graphs.")
 
-        # Instantiate self object
+        # --- Instantiate self object
         self._graph = graph
         self._true_graph = true_graph
         self._logic = logic
         self._threshold = threshold
         
-        # --- computed later
+        # --- Computed later
         self._edges = None
         self._edge_weights = None
         self._edge_colors = None
 
-        self._colormap = None
-        self._normalizer = None
-
-
-    ###
-    # Public API
-
-    def comp_edges(self):
+        # --- Compute
         self._compute_edges()
-    
-    @property
-    def edgesandcolors(self):
-        assert len(self._edges) == len(self._edge_colors), \
-            "Edges and Colors list differ in length."
-        return (self._edges, self._edge_colors)
-    
-    @property
-    def usedlogic(self):
-        return self._logic
-    
-    # Public API
-    ###
+
+
+    def draw_edges(self, 
+                   G: nx.DiGraph,
+                   nodes: Nodes,
+                   ax_graph: matplotlib.axes.Axes,
+                   ax_legend: matplotlib.axes.Axes):
+        
+        nx.draw_networkx_edges(G=G, 
+                                pos=nodes.positions, 
+                                edgelist=self._edges, 
+                                edge_color=self._edge_colors,
+                                ax=ax_graph, 
+                                node_size = nodes.nodesize)
+        
+        ax_legend.set_aspect(30)
+        sm = plt.cm.ScalarMappable(cmap=self._logic.colormap, norm=self._logic.normalizer)
+        cbar = plt.colorbar(sm, cax=ax_legend, ticklocation = _TICK_LOC)
+        cbar.set_label(self._logic.label, fontsize=_FONTSIZE)
+        cbar.ax.yaxis.set_label_position(_LABEL_POS)
+
 
     def _compute_edges(self):
         # True graph is larger than graph

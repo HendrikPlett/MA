@@ -1,4 +1,6 @@
 import pandas as pd
+import networkx as nx
+import matplotlib.axes
 
 from .helper import AdjGraphs
 from ..util import is_sub_adj_mat
@@ -54,36 +56,61 @@ class Nodes:
         self._visible = _VISIBLE
         self._invisible = _INVISIBLE
         
-        # --- computed later
+        # --- Computed later
         self._core_var = []
         self._diff_var = []
         self._rest_var = []
 
-    @property
-    def var_split(self):
-        return (self._core_var, self._diff_var, self._rest_var)
+        # --- Compute
+        self._compute_var_groups()
 
-    @property
-    def var_cols(self):
-        return (self._core_col, self._diff_col, self._rest_col)
-    
+
+    def draw_nodes(self, G: nx.DiGraph,
+                   ax_graph: matplotlib.axes.Axes):
+
+        common_kwargs = {'G': G,
+                         'pos': self._pos,
+                         'node_size': _NODESIZE,
+                         'edgelist': [],
+                         'ax': ax_graph,
+                         'with_labels': False, 
+                         'arrows': True}
+        # Core nodes w/o label
+        nx.draw_networkx(nodelist=self._core_var,
+                        node_color=self._core_col,
+                        alpha=_VISIBLE, 
+                        **common_kwargs)
+        # Diff nodes w/o label
+        nx.draw_networkx(nodelist=self._diff_var,
+                        node_color=self._diff_col,
+                        alpha=_VISIBLE, 
+                        **common_kwargs)
+        # Rest nodes w/o label and invisible (alpha = 0)
+        nx.draw_networkx(nodelist=self._rest_var,
+                        node_color=self._rest_col,
+                        alpha=_INVISIBLE, 
+                        **common_kwargs)
+        
+        # Add labels of core and difference variables
+        if self._latex_transf is None:
+            lbs = {label: label for label in self._core_var+self._diff_var}
+        else:
+            lbs = {label: self._nodes.latex_transform(label) for label in self._core_var+self._diff_var}
+
+        nx.draw_networkx_labels(G=G,
+                                pos=self._pos,
+                                labels = lbs,
+                                ax = ax_graph)
+
     @property
     def positions(self):
         return self._pos
     
     @property
-    def latex_transform(self):
-        return self._latex_transf
-    
-    @property
     def nodesize(self):
-        return self._node_size
-    
-    @property
-    def visibility(self):
-        return (self._visible, self._invisible) 
+        return self._node_size    
 
-    def compute_var_groups(self):
+    def _compute_var_groups(self):
         self._core_var = self._smaller_graph_var
         self._diff_var = list(set(self._larger_graph_var).difference(self._smaller_graph_var))
         self._rest_var = list(set(self._all_var).difference(self._larger_graph_var))
