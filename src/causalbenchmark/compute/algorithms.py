@@ -1,6 +1,6 @@
 # Standard 
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Iterable
 import pandas as pd
 
 # Own 
@@ -21,7 +21,7 @@ class Algorithm(ABC):
         self._alg_name = alg_name
     
     @abstractmethod
-    def fit(self, data: Tuple[pd.DataFrame, ...]) -> Tuple[pd.DataFrame, float]:
+    def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
         """
         Fits the respective algorithm to the passed data.
 
@@ -54,7 +54,7 @@ class GES(Algorithm):
         )
 
     @measure_time
-    def fit(self, data: Tuple[pd.DataFrame, ...]) -> Tuple[pd.DataFrame, float]:
+    def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
         pooled_data = pool_dfs(data)
         est_adj_mat, _ = ges.fit_bic(
             data=pooled_data.values,
