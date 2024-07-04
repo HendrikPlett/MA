@@ -54,11 +54,8 @@ def variables_increase(first: list, second: list) -> bool:
     return (first == give_sublist(first, second))
     
 def same_order(first: list, second: list) -> bool:
-    try: 
-        superlist = give_superlist(first, second)
-        sublist = give_sublist(first, second)
-    except ValueError:
-        return False
+    superlist = give_superlist(first, second)
+    sublist = give_sublist(first, second)
     superlist_reduced = [el for el in superlist if el in sublist]
     return superlist_reduced == sublist
 
@@ -138,7 +135,7 @@ def reduce_to_size(df: pd.DataFrame, reduce_to: pd.DataFrame):
     enforce_valid_adj_mat(df)
     enforce_valid_adj_mat(reduce_to)
     enforce_sub_adj_mat(reduce_to, df)
-    common_var = df.columns.intersection(reduce_to)
+    common_var = df.columns.intersection(reduce_to.columns)
     df_reduced = df.loc[common_var, common_var]
     return df_reduced
 
