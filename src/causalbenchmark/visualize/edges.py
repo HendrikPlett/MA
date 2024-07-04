@@ -11,10 +11,11 @@ from .edgelogic import EdgeLogic
 from .edgelogic import ALL_P, TP, FP, TP_DIFF, FP_DIFF
 
 
-_EDGE_THRESHOLD = 0.1
+_EDGE_THRESHOLD = 0.2
 _FONTSIZE = 12
 _TICK_LOC = "left"
 _LABEL_POS = "right"
+_NUM_TICKS = 6
 
 
 class Edges:
@@ -34,12 +35,12 @@ class Edges:
         true_graph = graphs.true_graph
 
         # Handle graph object
-        if is_sub_adj_mat(ref_graph, new_graph) & is_sub_adj_mat(new_graph, ref_graph):
+        if ref_graph.equals(new_graph):
             # Same graphs passed -> Just take first
-            if not ref_graph.equals(new_graph):
-                raise ValueError(
-                    "If both graphs have equal variables, it must be exactly the same")
             graph = ref_graph
+        elif is_sub_adj_mat(ref_graph, new_graph) & is_sub_adj_mat(new_graph, ref_graph):
+            # Same variables, but different values -> Subtract
+            graph = new_graph - ref_graph
         elif is_sub_adj_mat(ref_graph, new_graph):
             # Variable size increases
             ref_graph_pad = pad_zeros_to_size(ref_graph, new_graph)
@@ -81,9 +82,12 @@ class Edges:
         
         ax_legend.set_aspect(30)
         sm = plt.cm.ScalarMappable(cmap=self._logic.colormap, norm=self._logic.normalizer)
-        cbar = plt.colorbar(sm, cax=ax_legend, ticklocation = _TICK_LOC)
+        cbar = plt.colorbar(sm, cax=ax_legend)
         cbar.set_label(self._logic.label, fontsize=_FONTSIZE)
         cbar.ax.yaxis.set_label_position(_LABEL_POS)
+        cbar.set_ticks(np.linspace(self._logic.normalizer.vmin, self._logic.normalizer.vmax, num=_NUM_TICKS))
+        cbar.ax.yaxis.set_ticks_position(_TICK_LOC)
+
 
 
     def _compute_edges(self):
@@ -95,7 +99,7 @@ class Edges:
         total_msk = true_msk & graph_msk
 
         self._edges = [(total_msk.index[i], total_msk.columns[j]) for i,j in zip(*np.where(total_msk))]
-        self._edge_weights = [float(self._true_graph.at[pos]) for pos in self._edges]
+        self._edge_weights = [float(self._graph.at[pos]) for pos in self._edges]
         self._edge_colors = [self._logic.colormap(self._logic.normalizer(w)) for w in self._edge_weights]
 
 
