@@ -21,8 +21,8 @@ def abs_gt(a,b):
 class EdgeLogic:
 
     def __init__(self,
-                 graph_comp: function, 
-                 true_graph_comp: function,
+                 graph_comp, 
+                 true_graph_comp,
                  colormap,
                  normalizer: mcolors.Normalize,
                  label: str
