@@ -18,8 +18,8 @@ class Nodes:
 
     def __init__(self,
                  graphs: AdjGraphs, 
-                 pos: None,
-                 latex_transf: None
+                 pos: dict = None,
+                 latex_transf = None
                  ):
         
         # Unpack graphs from AdjGraphs object
@@ -68,6 +68,11 @@ class Nodes:
     def draw_nodes(self, G: nx.DiGraph,
                    ax_graph: matplotlib.axes.Axes):
 
+        if self._pos is None:
+            self._pos = nx.circular_layout([*self._core_var,
+                                            *self._diff_var,
+                                            *self._rest_var])
+
         common_kwargs = {'G': G,
                          'pos': self._pos,
                          'node_size': _NODESIZE,
@@ -95,7 +100,7 @@ class Nodes:
         if self._latex_transf is None:
             lbs = {label: label for label in self._core_var+self._diff_var}
         else:
-            lbs = {label: self._nodes.latex_transform(label) for label in self._core_var+self._diff_var}
+            lbs = {label: self._latex_transf(label) for label in self._core_var+self._diff_var}
 
         nx.draw_networkx_labels(G=G,
                                 pos=self._pos,
