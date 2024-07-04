@@ -40,7 +40,7 @@ class Bootstrap():
         # --- Provided implicitly
         self._bootstrap_variables = true_dag.columns.to_list()
         # --- Computed later
-        self._causal_inference_tasks = None
+        self._causal_inference_tasks = []
         self._avg_avg_cons_extension = None
         self._avg_runtime = None
         self._avg_var_sort = None
@@ -144,6 +144,12 @@ class BootstrapComparison:
     def run_comparison(self):
         for bootstrap in self._bootstraps:
             bootstrap.run_bootstrap()
+
+    def get_bootstraps(self) -> list[Bootstrap]:
+        return self._bootstraps
+    
+    def get_all_var_true_DAG(self) -> pd.DataFrame:
+        return self._all_var_true_dag
 
     def get_comparison_plot_dict(self):
         plot_dict = {}
