@@ -50,6 +50,9 @@ class Bootstrap():
         self._create_causal_inference_tasks()
         self._run_causal_inference_tasks()
         self._compute_averages()
+
+    def get_bootstrap_name(self) -> str:
+        return self._bootstrap_name
     
     def get_bootstrap_variables(self) -> list:
         return self._bootstrap_variables
