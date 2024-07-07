@@ -7,6 +7,7 @@ import pandas as pd
 # Own 
 from .dictable import Dictable
 from ..util import pool_dfs, measure_time, same_columns
+from . import ut_igsp
 
 # Third party
 from causallearn.search.ConstraintBased.PC import pc
@@ -273,8 +274,44 @@ class ICP(Algorithm):
         adj_matrix.iloc[rows, cols] = 1
         return adj_matrix
         
+class UT_IGSP(Algorithm):
+
+    def __init__(self,
+                 alpha_ci, 
+                 alpha_inv, 
+                 debug=0, 
+                 completion="gnies", 
+                 test="hsic", 
+                 obs_idx=0):
+        super().__init__(self.__class__.__name__)
+        self._alpha_ci = alpha_ci
+        self._alpha_inv = alpha_inv
+        self._debug = debug
+        self._completion = completion
+        self._test = test
+        self._obs_idx = obs_idx
+
+    @measure_time
+    def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        
+        if not same_columns(data):
+            raise ValueError("Not all passed dfs have the same columns.")
+        ut_fit = ut_igsp.fit(
+            data=[df.values for df in data],
+            alpha_ci=self._alpha_ci,
+            alpha_inv=self._alpha_inv,
+            debug=self._debug, 
+            completion=self._completion,
+            test=self._test,
+            obs_idx=self._obs_idx
+        )
+        fitted_icpdag = ut_fit[0] # Get ICPDAG
+        var = data[0].columns
+        return pd.DataFrame(fitted_icpdag, index=var, columns=var)
 
 
+#------------------------------------------------------
+# Helper
 
 def _linear_to_binary(adj_mat: np.ndarray, var: list[str]):
     adj_mat[adj_mat != 0] = 1
