@@ -54,11 +54,17 @@ class EdgeLogic:
     def label(self):
         return self._label
 
+_true_edges = EdgeLogic(graph_comp=gt,
+                        true_graph_comp= true,
+                        colormap=_COLMAP_ALL,
+                        normalizer=_ZEROONE,
+                        label=None)
+
 _all_p = EdgeLogic(graph_comp=gt,
                  true_graph_comp = true,
                  colormap=_COLMAP_ALL,
                  normalizer=_ZEROONE,
-                 label=None)    
+                 label='Edge discovered in %')    
 
 _tp = EdgeLogic(graph_comp=gt,
                true_graph_comp=gt,
@@ -87,6 +93,7 @@ _fp_diff = EdgeLogic(graph_comp=abs_gt,
 
 ###
 # Public API
+TRUE_EDGES = _true_edges
 ALL_P = _all_p
 TP = _tp
 FP = _fp
