@@ -34,9 +34,9 @@ class Edges:
         new_graph = graphs.new_graph
         true_graph = graphs.true_graph
 
-        # Handle graph object
-        if ref_graph.equals(new_graph):
-            # Same graphs passed -> Just take first
+        # Derive graph df which will then be processed according to EdgeLogic 
+        if ref_graph is new_graph:
+            # Same graph instances passed -> Absolute plot desired
             graph = ref_graph
         elif is_sub_adj_mat(ref_graph, new_graph) & is_sub_adj_mat(new_graph, ref_graph):
             # Same variables, but different values -> Subtract
