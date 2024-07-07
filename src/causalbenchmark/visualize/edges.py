@@ -8,7 +8,7 @@ from .helper import AdjGraphs
 from .nodes import Nodes
 from ..util import is_sub_adj_mat, reduce_to_size, pad_zeros_to_size
 from .edgelogic import EdgeLogic
-from .edgelogic import ALL_P, TP, FP, TP_DIFF, FP_DIFF
+from .edgelogic import TRUE_EDGES, ALL_P, TP, FP, TP_DIFF, FP_DIFF
 
 
 _EDGE_THRESHOLD = 0.2
@@ -26,7 +26,7 @@ class Edges:
                  threshold: float = _EDGE_THRESHOLD
                 ):
         
-        if not logic in (ALL_P, TP, FP, TP_DIFF, FP_DIFF):
+        if not logic in (TRUE_EDGES, ALL_P, TP, FP, TP_DIFF, FP_DIFF):
             raise ValueError("Unknown edge logic passed.")
 
         # Unpack graphs from AdjGraphs object
@@ -80,6 +80,10 @@ class Edges:
                                 ax=ax_graph, 
                                 node_size = nodes.nodesize)
         
+        if self._logic.label is None: # No colormap wanted
+            return
+
+        # Add colormap legend
         ax_legend.set_aspect(30)
         sm = plt.cm.ScalarMappable(cmap=self._logic.colormap, norm=self._logic.normalizer)
         cbar = plt.colorbar(sm, cax=ax_legend)
