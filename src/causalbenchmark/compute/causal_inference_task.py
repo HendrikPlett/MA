@@ -89,7 +89,11 @@ class CausalInferenceTask:
             and computes+saves the average of these extensions 
         """
         self._all_cons_extensions = all_dags(self._estimated_graph.values).tolist()
-        avg_dag = np.average(self._all_cons_extensions, axis=0)
+        if len(self._all_cons_extensions) == 0:
+            print(f"Nr cons extensions: {len(self._all_cons_extensions)}")
+            avg_dag = np.zeros_like(self._true_dag.values)
+        else: 
+            avg_dag = np.average(self._all_cons_extensions, axis=0)
         self._average_cons_extension = pd.DataFrame(
             data=avg_dag,
             index=self._estimated_graph.index,
