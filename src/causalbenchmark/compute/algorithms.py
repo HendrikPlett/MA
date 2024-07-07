@@ -61,7 +61,8 @@ class PC(Algorithm):
         pc_model = pc(
             data=pooled_data.values,
             alpha=self._alpha,
-            indep_test=self._indep_test
+            indep_test=self._indep_test,
+            show_progress=False
         )
         pc_graph = pc_model.G.graph
         var = data[0].columns
