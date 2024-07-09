@@ -1,3 +1,7 @@
+"""
+Various Causal Discovery Algorithm with unified API.
+"""
+
 # Standard 
 from abc import ABC, abstractmethod
 from typing import Iterable
@@ -23,7 +27,11 @@ import causalicp
 # Abstract base class
 
 class Algorithm(ABC):
-    """Abstract class where all Causal Inference algorithms inherit from"""
+    """
+    Abstract class where all Causal Inference algorithms inherit from.
+    Each subclass encapuslates a third-party implementation of the respective
+    algorithm and adheres to the unified API defined in this superclass.
+    """
 
     def __init__(self, alg_name: str):
         """Used to store hyperparameters"""
@@ -42,7 +50,10 @@ class Algorithm(ABC):
 
         Returns:
             tuple[float, pd.DataFrame]: Runtime and estimated binary 
-                adjacency matrix A with A[i,j]=1 <-> edge from i to j
+                adjacency matrix A with 
+                - A[i,j]=1 and A[j,i] = 0 <-> directed edge from i to j
+                - A[i,j]=1 and A[j,i] = 1 <-> undirected edge between i and j
+                - A[i,j]=0 and A[j,i] = 0 <-> no edge between i and j
         """
         pass
 
@@ -51,14 +62,29 @@ class Algorithm(ABC):
 # Algorithm implementations
 
 class PC(Algorithm):
+    """Encapsulates PC implementation from causal-learn package."""
 
     def __init__(self, alpha: float, indep_test= "fisherz"):
+        """
+        Initialize with wanted hyperparameters.
+
+        Args:
+            alpha (float): Significance level for the indep. test.
+            indep_test (str, optional): The type of independence 
+                test to use. Options are:
+                - "fisherz": Fisher's Z conditional independence test
+                - "chisq": Chi-squared conditional independence test
+                - "gsq": G-squared conditional independence test
+                - "kci": Kernel-based conditional independence test
+                Defaults to "fisherz".
+        """
         super().__init__(alg_name=self.__class__.__name__)
         self._alpha = alpha
         self._indep_test = indep_test
 
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
         pc_model = pc(
             data=pooled_data.values,
@@ -71,6 +97,7 @@ class PC(Algorithm):
         return self._transform_to_adj_mat(pc_graph, var)
 
     def _transform_to_adj_mat(self, pc_graph: np.ndarray, var: list[str]):
+        """Turns causal-learn adj. matrix into format required by 'Algorithm' API."""
         adj_matrix = np.zeros_like(pc_graph)
 
         # Undirected Edge between i and j
@@ -98,36 +125,52 @@ class PC(Algorithm):
 
 
 class GES(Algorithm):
-
-    def __init__(self):
-        """ No hyperparameters to pass for GES. """
+    """Encapsulates GES implementation from ges package."""
+    def __init__(self,
+                 phases=['forward', 'backward', 'turning'],
+                 iterate=False,
+                 debug=0
+                 ):
+        """
+        GES does not require any real hyperparameters.
+        
+        For implementation options, see documentation of ges.
+        """
         super().__init__(alg_name=self.__class__.__name__)
+        self._phases = phases
+        self._iterate = iterate
+        self._debug = debug
 
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
         est_adj_mat, _ = ges.fit_bic(
             data=pooled_data.values,
-            phases=['forward', 'backward', 'turning'],
-            debug=0
+            phases=self._phases,
+            iterate=self._iterate,
+            debug=self._debug
         )
-        est_adj_mat_df = pd.DataFrame(
-            data=est_adj_mat, 
-            index=pooled_data.columns,
-            columns=pooled_data.columns
-        )
-        return est_adj_mat_df
+        var = pooled_data.columns
+        return pd.DataFrame(est_adj_mat, index=var, columns=var)
 
 
 class GIES(Algorithm):
-
+    """Encapsulates GIES implementation from gies package."""
     def __init__(self, 
                  interventions: list[list],
                  A0 = None,
                  phases = ['forward', 'backward', 'turning'], 
                  iterate = True, 
                  debug = 0):
+        """
+        Initialize with true interventions.
 
+        Args:
+            interventions (list[list]): One list of intervention targets
+                (encoded as variable names) per dataset that will be passed.
+            For implementation related parameters, see gies documentation.
+        """
         super().__init__(alg_name=self.__class__.__name__)
         self._interventions=interventions
         self._A0 = A0
@@ -137,6 +180,7 @@ class GIES(Algorithm):
     
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         if not same_columns(data):
             raise ValueError("Not all passed dfs have the same columns.")
         if len(self._interventions) != len(data):
@@ -147,7 +191,7 @@ class GIES(Algorithm):
         # Transform strings to indices 
         interventions = [[variables.index(var) for var in inner_list] for inner_list in self._interventions]
         estimate, _ = gies.fit_bic(
-            data=[df.values for df in data],
+            data=[df.values for df in data], # Unpack dfs to np.ndarrays
             I=interventions,
             A0=self._A0,
             phases=self._phases,
@@ -158,7 +202,7 @@ class GIES(Algorithm):
 
 
 class GNIES(Algorithm):
-
+    """Encapsulates GNIES implementation from gnies package."""
     def __init__(self, 
                 lmbda=None,
                 known_targets=set(),
@@ -171,6 +215,10 @@ class GNIES(Algorithm):
                 ges_phases=["forward", "backward", "turning"],
                 debug=0
                 ):
+        """
+        Initialize GNIES object. No hyperparameters necessary.
+
+        For implemenation related parameters, see gnies documentation."""
         super().__init__(alg_name=self.__class__.__name__)
         self._lmbda = lmbda
         self._known_targets = known_targets
@@ -185,6 +233,7 @@ class GNIES(Algorithm):
     
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         if not same_columns(data):
             raise ValueError("Not all passed dfs have the same columns.")
         _, estimate, _ = gnies.fit(
@@ -205,7 +254,7 @@ class GNIES(Algorithm):
 
 
 class NoTears(Algorithm):
-
+    """Encapsulates NoTears implementation from notears package."""
     def __init__(self,
                  lambda1: float = 0.1,
                  loss_type: str = 'l2',
@@ -214,6 +263,16 @@ class NoTears(Algorithm):
                  rho_max: float = 10000000000000000,
                  w_threshold: float = 0.3
                  ):
+        """
+        Initialize NoTears object with desired hyperparameters.
+
+        Args:
+            lambda1 (float, optional): L1 penalty parameter for objective 
+                function. Defaults to 0.1.
+            loss_type (str, optional): Loss type employed in objective function.
+                Defaults to 'l2'.
+            For implemenation related parameters, see notears documentation.
+        """
         super().__init__(alg_name=self.__class__.__name__)
         self._lambda1 = lambda1
         self._loss_type = loss_type
@@ -224,6 +283,7 @@ class NoTears(Algorithm):
 
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
         notears_graph = notears_linear(
             X=pooled_data.values,
@@ -240,20 +300,36 @@ class NoTears(Algorithm):
 
 
 class Golem(Algorithm):
-    
+    """Encapsulates Golem implementation from golempckg package."""    
     def __init__(self,
                 equal_variances: bool,
-                postproc_threshold = 0.3,
-                lambda_1 = None,
-                lambda_2 = None,
+                lambda_1: float = None,
+                lambda_2: float = None,
+                postproc_threshold: float = 0.3,
                 num_iter=1e+5, 
                 learning_rate=1e-3, 
                 seed=1,
                 checkpoint_iter=None,
                 ):
-        
+        """
+        Initialize Golem object with desired hyperparameters.
+
+        Args:
+            equal_variances (bool): Whether equal noise variances are assumed 
+                when building the objective function. If True, objective function
+                will be based on the MSE error, if False, objective function 
+                will be bassed on gaussian likelihood.
+            lambda_1 (float, optional): L1 penalty parameter. Defaults to 2e-2 
+                or 5.0 depending on equal_variances.
+            lambda_2 (float, optional): L2 penalty parameter. Defaults to 2r-3
+                or 5.0 depending on equal_variances.
+            postproc_threshold (float, optional): Edge weights below this threshold
+                are set to 0 in postprocessing. Defaults to 0.3.
+            For implemenation related parameters, see notears documentation.
+        """
         super().__init__(alg_name=self.__class__.__name__)
         self._equal_variances = equal_variances
+        # Default parameters recommended in golem repository.
         if equal_variances and lambda_1 is None and lambda_2 is None:
             self._lambda_1=2e-2, 
             self._lambda_2=5.0
@@ -270,6 +346,7 @@ class Golem(Algorithm):
     
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
         adj_mat_raw = fit_golem(
             X=pooled_data.values,
@@ -286,36 +363,37 @@ class Golem(Algorithm):
         return _linear_to_binary(adj_mat, var)
 
 
-
 class VarSortRegress(Algorithm):
-    
+    """Encapsulates VarSortRegress implementation from CausalDisco package."""    
     def __init__(self):
         """ No hyperparameters to pass for VarSortRegress."""
         super().__init__(alg_name=self.__class__.__name__)
 
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
-        adj_mat = var_sort_regress(X=pooled_data.values)
+        adj_mat = var_sort_regress(X=pooled_data.values) # Returns linear adj. matrix
         var = pooled_data.columns
         return _linear_to_binary(adj_mat, var)
 
 
 class R2SortRegress(Algorithm):
-
+    """Encapsulates R2SortRegress implementation from CausalDisco package."""    
     def __init__(self):
-        """ No hyperparameters to pass for VarSortRegress."""
+        """ No hyperparameters to pass for R2SortRegress."""
         super().__init__(alg_name=self.__class__.__name__)
 
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
-        adj_mat = r2_sort_regress(X=pooled_data.values)
+        adj_mat = r2_sort_regress(X=pooled_data.values) # Returns linear adj. matrix
         var = pooled_data.columns
         return _linear_to_binary(adj_mat, var)
 
 class ICP(Algorithm):
-
+    """Encapsulates ICP implementation from causalicp package."""    
     def __init__(self,
                  target: str,
                  alpha: float = 0.05,
@@ -323,6 +401,15 @@ class ICP(Algorithm):
                  precompute: bool = True,
                  verbose: bool = False,
                  ):
+        """
+        Initialize ICP object with desired hyperparameters.
+
+        Args:
+            target (str): Which variable to predict. 
+            alpha (float, optional): Significance level for the test 
+                procedure. Defaults to 0.05.
+            For implemenation related parameters, see causalicp documentation.
+        """
         super().__init__(alg_name=self.__class__.__name__)
         self._target = target
         self._alpha = alpha
@@ -332,6 +419,7 @@ class ICP(Algorithm):
     
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
         if not same_columns(data):
             raise ValueError("Not all passed dfs have the same columns.")
         if not self._target in list(data[0].columns):
@@ -339,7 +427,7 @@ class ICP(Algorithm):
         target_index = list(data[0].columns).index(self._target)
 
         icp_fit = causalicp.fit(
-            data=[df.values for df in data],
+            data=[df.values for df in data], # Unpack pd.dfs to np.ndarrays
             target=target_index,
             alpha=self._alpha,
             sets=self._sets,
@@ -349,29 +437,54 @@ class ICP(Algorithm):
 
         parents = icp_fit.estimate # None if estimated parent set is empty
         if parents is not None:
-            edges = [(parent, target_index) for parent in parents]
+            edges = [(parent, target_index) for parent in parents] # Create edges
         else:
             edges = []
 
         return self._transform_to_adj_mat(edges, data[0].columns)
     
-    def _transform_to_adj_mat(self, edges: list, var: list[str]):
+    def _transform_to_adj_mat(self, edges: list, var: list[str]) -> pd.DataFrame:
+        """
+        Turns list of edges into Adjacency matrix.
+
+        Args:
+            edges (list): List of edges. Variables encoded by their index.
+            var (list[str]): List of variables the indices relate to.
+
+        Returns:
+            pd.DataFrame: Adjacency matrix in format desired by 'Algorithm'
+                class API.
+        """
         adj_matrix = pd.DataFrame(0, index=var, columns=var)
         if len(edges)==0:
             return adj_matrix
-        rows, cols = zip(*edges)
+        # Unpack list of edges into list with row indices and list with column indices
+        rows, cols = zip(*edges) 
         adj_matrix.iloc[rows, cols] = 1
         return adj_matrix
         
 class UT_IGSP(Algorithm):
-
+    """Encapsulates UT_IGSP implementation from causaldag package."""    
     def __init__(self,
-                 alpha_ci, 
-                 alpha_inv, 
+                 alpha_ci: float, 
+                 alpha_inv: float, 
                  debug=0, 
                  completion="gnies", 
                  test="hsic", 
                  obs_idx=0):
+        """
+        Initialize UT_IGSP object with desired hyperparameters.
+
+        Args:
+            alpha_ci (float): Level of conditional independence test.
+            alpha_inv (float): Level of test that two Gaussians are equal.
+            completion (str, optional): What equivalence class to compute
+                based on UT-IGSP's output. Defaults to "gnies".
+            test (str, optional): What test to use. Options: "hsic", "gauss".
+                Defaults to "hsic".
+            obs_idx (int, optional): The index of the observational data in the
+                passed list of dataframes. Defaults to 0.
+        """
         super().__init__(self.__class__.__name__)
         self._alpha_ci = alpha_ci
         self._alpha_inv = alpha_inv
@@ -382,7 +495,7 @@ class UT_IGSP(Algorithm):
 
     @measure_time
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
-        
+        """See superclass fit fct. for documentation."""
         if not same_columns(data):
             raise ValueError("Not all passed dfs have the same columns.")
         ut_fit = ut_igsp.fit(
@@ -403,5 +516,9 @@ class UT_IGSP(Algorithm):
 # Helper
 
 def _linear_to_binary(adj_mat: np.ndarray, var: list[str]):
+    """
+    Input[i,j]!=0 is transformed to Output[i,j]=1 and 
+    index/columns are added.
+    """
     adj_mat[adj_mat != 0] = 1
     return pd.DataFrame(adj_mat, index=var, columns=var)
