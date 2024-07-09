@@ -12,6 +12,8 @@ from . import ut_igsp
 # Third party
 from causallearn.search.ConstraintBased.PC import pc
 import ges
+import gies
+import gnies
 from notears.linear import notears_linear
 from golempckg import fit_golem, postprocess
 from CausalDisco.baselines import var_sort_regress, r2_sort_regress
@@ -115,6 +117,92 @@ class GES(Algorithm):
             columns=pooled_data.columns
         )
         return est_adj_mat_df
+
+
+class GIES(Algorithm):
+
+    def __init__(self, 
+                 interventions: list[list],
+                 A0 = None,
+                 phases = ['forward', 'backward', 'turning'], 
+                 iterate = True, 
+                 debug = 0):
+
+        super().__init__(alg_name=self.__class__.__name__)
+        self._interventions=interventions
+        self._A0 = A0
+        self._phases = phases
+        self._iterate = iterate
+        self._debug = debug
+    
+    @measure_time
+    def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        if not same_columns(data):
+            raise ValueError("Not all passed dfs have the same columns.")
+        if len(self._interventions) != len(data):
+            raise ValueError("Data size differs from intervention size.")
+        variables = list(data[0].columns)
+        if not all(var in variables for inner_list in self._interventions for var in inner_list):
+            raise ValueError("Unknown intervention targets")
+        # Transform strings to indices 
+        interventions = [[variables.index(var) for var in inner_list] for inner_list in self._interventions]
+        estimate, _ = gies.fit_bic(
+            data=[df.values for df in data],
+            I=interventions,
+            A0=self._A0,
+            phases=self._phases,
+            iterate=self._iterate,
+            debug=self._debug
+        )
+        return pd.DataFrame(estimate, index=variables, columns=variables)
+
+
+class GNIES(Algorithm):
+
+    def __init__(self, 
+                lmbda=None,
+                known_targets=set(),
+                approach="greedy",
+                I0=set(),
+                phases=["forward", "backward"],
+                direction="forward",
+                center=True,
+                ges_iterate=True,
+                ges_phases=["forward", "backward", "turning"],
+                debug=0
+                ):
+        super().__init__(alg_name=self.__class__.__name__)
+        self._lmbda = lmbda
+        self._known_targets = known_targets
+        self._approach = approach
+        self._I0 = I0
+        self._phases = phases
+        self._direction = direction
+        self._center = center
+        self._ges_iterate = ges_iterate
+        self._ges_phases = ges_phases
+        self._debug = debug
+    
+    @measure_time
+    def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        if not same_columns(data):
+            raise ValueError("Not all passed dfs have the same columns.")
+        _, estimate, _ = gnies.fit(
+            data=[df.values for df in data],
+            lmbda=self._lmbda,
+            known_targets=self._known_targets,
+            approach=self._approach,
+            I0 = self._I0,
+            phases=self._phases,
+            direction=self._direction,
+            center=self._center,
+            ges_iterate=self._ges_iterate,
+            ges_phases=self._ges_phases,
+            debug=self._debug
+        )
+        var = data[0].columns
+        return pd.DataFrame(estimate, index=var, columns=var)
+
 
 class NoTears(Algorithm):
 
