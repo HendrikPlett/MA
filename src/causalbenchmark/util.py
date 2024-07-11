@@ -86,7 +86,7 @@ def give_sublist(first: list, second: list) -> list:
 def variables_increase(first: list, second: list) -> bool:
     """
     Whether 'first' has a subset of variables compared to 'second'.
-    Also implicitly checks for dublicates and empty intersection.
+    Also implicitly checks for dublicates.
     """
     return (first == give_sublist(first, second))
     
@@ -182,7 +182,18 @@ def bootstrap_sample(datasets: Iterable[pd.DataFrame], sample_sizes: Iterable[Un
 #------------------------------------------------------
 # Adjacency matrix dataframe operations
 
-def is_sub_adj_mat(df: pd.DataFrame, larger_df: pd.DataFrame):
+def is_sub_adj_mat(df: pd.DataFrame, larger_df: pd.DataFrame) -> bool:
+    """
+    Whether df has a subset of variables compared to larger_df.
+
+    Args:
+        df (pd.DataFrame): Valid adjacency matrix (will be checked).
+        larger_df (pd.DataFrame): Valid potentially larger adjacency 
+            matrix (will be checked).
+
+    Returns:
+        bool: Whether df has a subset of variables compared to larger_df
+    """
     enforce_valid_adj_mat(df)
     enforce_valid_adj_mat(larger_df)
     if variables_increase(df.index.to_list(), larger_df.index.to_list()):
@@ -191,10 +202,22 @@ def is_sub_adj_mat(df: pd.DataFrame, larger_df: pd.DataFrame):
         return False
 
 def enforce_sub_adj_mat(df: pd.DataFrame, larger_df: pd.DataFrame):
+    """Raises ValueError if df is not a sub adjacency matrix of larger_df."""
     if not is_sub_adj_mat(df, larger_df):
         raise ValueError("df is not sub matrix of larger_df.")
 
-def reduce_to_size(df: pd.DataFrame, reduce_to: pd.DataFrame):
+def reduce_to_size(df: pd.DataFrame, reduce_to: pd.DataFrame) -> pd.DataFrame:
+    """
+    Removes all rows/cols from df that are not in reduce_to.
+
+    Args:
+        df (pd.DataFrame): Valid adjacency matrix (will be checked).
+        reduce_to (pd.DataFrame): Valid sub adjacency matrix of df 
+            (will be checked).
+
+    Returns:
+        pd.DataFrame: df reduced to reduce_to.
+    """
     enforce_valid_adj_mat(df)
     enforce_valid_adj_mat(reduce_to)
     enforce_sub_adj_mat(reduce_to, df)
@@ -202,7 +225,17 @@ def reduce_to_size(df: pd.DataFrame, reduce_to: pd.DataFrame):
     df_reduced = df.loc[common_var, common_var]
     return df_reduced
 
-def pad_zeros_to_size(df: pd.DataFrame, pad_to: pd.DataFrame):
+def pad_zeros_to_size(df: pd.DataFrame, pad_to: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adds rows/columns with zeros to df s.t. it has the same variables as pad_to.
+
+    Args:
+        df (pd.DataFrame): Valid sub adjacency matrix of pad_to (will be checked).
+        pad_to (pd.DataFrame): Valid adjacency matrix (will be checked).
+
+    Returns:
+        pd.DataFrame: Padded df.
+    """
     enforce_valid_adj_mat(df)
     enforce_valid_adj_mat(pad_to)
     enforce_sub_adj_mat(df, pad_to)
@@ -214,16 +247,27 @@ def pad_zeros_to_size(df: pd.DataFrame, pad_to: pd.DataFrame):
 
 
 def enforce_valid_bstr_adj_mat(graph: pd.DataFrame):
+    """
+    Checks that all elements in the matrix are in [0,1], i.e.
+        valid percentages after averaging over DAGs generated from 
+        bootstrap samples.
+    """
     enforce_valid_adj_mat(graph)
     if not ((graph >= 0) & (graph <= 1)).all().all():
         raise ValueError("Entries outside of [0,1].")
     
 def enforce_binary_adj_mat(graph: pd.DataFrame):
+    """Raieses ValueError if passed graph contains non-binary values."""
     enforce_valid_adj_mat(graph)
     if not graph.isin([0,1]).all().all():
         raise ValueError("Not all entries binary.")
 
 def enforce_valid_adj_mat(graph: pd.DataFrame):
+    """
+    Raises ValueError if
+    - graph has different index and column names or
+    - graph has dublicate column names.
+    """
     if not same_columns([graph, graph.transpose()]):
         raise ValueError("Different index/column names.")
     enforce_no_duplicates([graph.columns.to_list()])
