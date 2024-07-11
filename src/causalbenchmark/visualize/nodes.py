@@ -1,3 +1,8 @@
+"""
+Contains the Node class that provides functionality to compute and draw a list of edges.
+"""
+
+from typing import Callable
 import pandas as pd
 import networkx as nx
 import matplotlib.axes
@@ -5,22 +10,37 @@ import matplotlib.axes
 from .helper import AdjGraphs
 from ..util import is_sub_adj_mat
 
+# Node colors
 _CORE_COL = 'lightblue'
 _DIFF_COL_ADD = 'deepskyblue'
 _DIFF_COL_DEL = 'aliceblue'
 _REST_COL = 'white'
 
+# Node size and visibility
 _NODESIZE = 400
 _VISIBLE = 1.0
 _INVISIBLE = 0.0
 
 class Nodes:
-
+    """Provides functionality to compute and draw a set of nodes."""
     def __init__(self,
                  graphs: AdjGraphs, 
                  pos: dict = None,
-                 latex_transf = None
+                 latex_transf: Callable[[str], str] = None
                  ):
+        """
+        Instantiates instance and computes the node and color sets
+            based on the input.
+
+        Args:
+            graphs (AdjGraphs): The graphs to be plotted.
+            pos (dict, optional): Where nodes shall be plotted.
+                Key: Node name, Value: (float, float) position on the grid.
+                Defaults to None.
+            latex_transf (Callable[[str], str], optional): Function turning the 
+                variable strings into a latex representation that will be used
+                for the plot. Defaults to None.
+        """
         
         # Unpack graphs from AdjGraphs object
         ref_graph = graphs.ref_graph
@@ -67,7 +87,16 @@ class Nodes:
 
     def draw_nodes(self, G: nx.DiGraph,
                    ax_graph: matplotlib.axes.Axes):
+        """
+        Draws computed nodes and colors onto the passed axes.
 
+        Args:
+            G (nx.DiGraph): ...
+            ax_graph (matplotlib.axes.Axes): The axes to draw
+                the nodes on.
+        """
+
+        # Use circular layout of no positions are passed
         if self._pos is None:
             self._pos = nx.circular_layout([*self._core_var,
                                             *self._diff_var,
@@ -109,13 +138,16 @@ class Nodes:
 
     @property
     def positions(self):
+        """Get the positions used for plotting."""
         return self._pos
     
     @property
     def nodesize(self):
+        """Get the node size used for plotting."""
         return self._node_size    
 
     def _compute_var_groups(self):
+        """Compute three groups of variables."""
         self._core_var = self._smaller_graph_var
         self._diff_var = list(set(self._larger_graph_var).difference(self._smaller_graph_var))
         self._rest_var = list(set(self._all_var).difference(self._larger_graph_var))

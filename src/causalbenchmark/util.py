@@ -1,3 +1,8 @@
+"""
+Util functions for the causalbenchmark package.
+"""
+
+
 # Standard 
 import pandas as pd 
 from typing import Iterable, Union
@@ -22,13 +27,28 @@ def measure_time(func):
 # List operations
 
 def has_duplicates(l: list) -> bool:
+    """Whether or not a list contains an element more than once."""
     return len(l) != len(set(l))
 
 def enforce_no_duplicates(l_of_l: list[list]):
+    """Raises a ValueError if any passed list contains dublicates."""
     if any([has_duplicates(l) for l in l_of_l]):
         raise ValueError("Duplicates in at least one passed list.")
 
 def give_superlist(first: list, second: list) -> list:
+    """
+    Returns the list that contains the other list.
+
+    Args:
+        first (list): A list without dublicates (will also be checked).
+        second (list): A list without dublicates (will also be checked).
+
+    Raises:
+        ValueError: If no list contains the other list.
+
+    Returns:
+        list: The list that contains the other list.
+    """
     enforce_no_duplicates([first, second])
     first_set = set(first)
     second_set = set(second)
@@ -40,6 +60,19 @@ def give_superlist(first: list, second: list) -> list:
         raise ValueError("No Variable list contains the other.")
 
 def give_sublist(first: list, second: list) -> list:
+    """
+    Returns the list that is contained by the other list.
+
+    Args:
+        first (list): A list without dublicates (will also be checked).
+        second (list): A list without dublicates (will also be checked).
+
+    Raises:
+        ValueError: If no list is contained by the other list.
+
+    Returns:
+        list: The list that is contained by the other list.
+    """
     enforce_no_duplicates([first, second])
     first_set = set(first)
     second_set = set(second)
@@ -51,9 +84,16 @@ def give_sublist(first: list, second: list) -> list:
         raise ValueError("No Variable list contains the other.")
 
 def variables_increase(first: list, second: list) -> bool:
+    """
+    Whether 'first' has a subset of variables compared to 'second'.
+    Also implicitly checks for dublicates and empty intersection.
+    """
     return (first == give_sublist(first, second))
     
 def same_order(first: list, second: list) -> bool:
+    """
+    Whether the common elements in two lists have the same order.
+    """
     superlist = give_superlist(first, second)
     sublist = give_sublist(first, second)
     superlist_reduced = [el for el in superlist if el in sublist]
@@ -70,7 +110,10 @@ def pool_dfs(dfs: Iterable[pd.DataFrame]) -> pd.DataFrame:
 
     Args:
         dfs (Iterable): Iterable of DataFrames with same column 
-            names and ordering. 
+            names and ordering (will be checked).
+
+    Raises:
+        ValueError: If the input dfs columns' are not the same.
 
     Returns:
         pd.DataFrame: The concatened DataFrame.
@@ -88,6 +131,9 @@ def same_columns(dfs: Iterable[pd.DataFrame]) -> bool:
     Args:
         dfs (Iterable): Iterable of pandas DataFrames.
 
+    Raises:
+        ValueError: If the columns are not the same.
+
     Returns:
         bool: Whether all columns are equal and in the same order.
     """
@@ -98,7 +144,24 @@ def same_columns(dfs: Iterable[pd.DataFrame]) -> bool:
     return same_names_and_order
     
 
-def bootstrap_sample(datasets: Iterable[pd.DataFrame], sample_sizes: Iterable[Union[int, float]], seed):
+def bootstrap_sample(datasets: Iterable[pd.DataFrame], sample_sizes: Iterable[Union[int, float]], 
+                     seed: int) -> list[pd.DataFrame]:
+    """
+    Generates a single bootstrap sample from the passed list of dataframes.
+
+    Args:
+        datasets (Iterable[pd.DataFrame]): Data to bootstrap from.
+        sample_sizes (Iterable[Union[int, float]]): A sample size for each df.
+            Either a percentage (float) or number of samples (int).
+        seed (int): Random seed. Note that different seeds will be used for the
+            sampling of each passed df.
+
+    Raises:
+        ValueError: If the sample sizes have an incorrect format.
+
+    Returns:
+        list[pd.DataFrame]: Bootstrap sample.
+    """
 
     assert len(datasets) == len(sample_sizes)
     

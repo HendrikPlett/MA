@@ -1,3 +1,9 @@
+"""
+Functionality to:
+    - Compute all and the average consistent extensions from the 'Algorithm' output.
+    - Compute sortability of passed data.
+"""
+
 # Standard 
 from typing import Iterable
 import numpy as np
@@ -12,13 +18,24 @@ from .algorithms import Algorithm
 from ..util import same_columns, pool_dfs
 
 class CausalInferenceTask:
-    
+    """
+    Analyze the data that is passed to 'Algorithm' and 
+    postprocess 'Algorithm's output.
+    """
     def __init__(self, 
                  algorithm: Algorithm,
                  data: Iterable[pd.DataFrame], 
                  true_dag: pd.DataFrame
                  ):
-        
+        """
+        Passed arguments cannot be changed later on.
+
+        Args:
+            algorithm (Algorithm): The algorithm to use.
+            data (Iterable[pd.DataFrame]): The data to pass to the algorithm.
+            true_dag (pd.DataFrame): The DAG according to which the passed 
+                data was generated.
+        """
         # --- Check validity of input
         if not same_columns((*data, true_dag, true_dag.transpose())):
             raise ValueError("Different variables are used in the data and/or TrueDag.")
@@ -53,7 +70,7 @@ class CausalInferenceTask:
         return self._estimated_graph
     
     def get_runtime(self) -> float:
-        """ Gets the runtime needed to fit the graph. """
+        """ Gets the runtime needed to fit the algorithm. """
         return self._runtime
     
     def get_all_cons_extensions(self) -> list[np.ndarray]:
@@ -73,7 +90,7 @@ class CausalInferenceTask:
         return self._r2_sort
     
     def _compute_sortability(self):
-        """ Computes Variance and R2 Sortability of the passed dataset. """
+        """ Computes and saves Variance and R2 Sortability of the passed dataset. """
         self._var_sort = var_sortability(
             X=pool_dfs(self._data).values, 
             W=self._true_dag.values
@@ -85,11 +102,12 @@ class CausalInferenceTask:
     
     def _consistent_extensions(self):
         """ 
-        Computes+saves all consistent extensions of the fitted graph
-            and computes+saves the average of these extensions 
+        Computes and saves all consistent extensions of the fitted graph
+            and computes and saves the average of these extensions.
         """
         self._all_cons_extensions = all_dags(self._estimated_graph.values).tolist()
-        if len(self._all_cons_extensions) == 0:
+        # Handle the case of zero valid consistent extensions
+        if len(self._all_cons_extensions) == 0: 
             print(f"Nr cons extensions: {len(self._all_cons_extensions)}")
             avg_dag = np.zeros_like(self._true_dag.values)
         else: 

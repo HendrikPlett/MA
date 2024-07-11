@@ -1,8 +1,9 @@
-#####
-# Copied from 
-# https://github.com/juangamella/gnies-paper/blob/master/src/ut_igsp.py
-# on 07. July 2024
-#####
+""" 
+Wrapper for the UT-IGSP implementation in the causaldag package.
+Copied from 
+https://github.com/juangamella/gnies-paper/blob/master/src/ut_igsp.py
+on 07. July 2024
+"""
 
 
 # Copyright 2021 Juan L Gamella
