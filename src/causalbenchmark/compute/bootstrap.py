@@ -8,6 +8,7 @@ Class 'BootstrapComparison' to compare Bootstrap instances.
 from typing import Iterable
 import numpy as np
 import pandas as pd
+import pickle
 
 # Third party
 
@@ -119,6 +120,14 @@ class Bootstrap():
         """
         return self._avg_r2_sort
     
+    def save(self, path: str = None):
+        if path is None:
+            path = self._bootstrap_name+".pkl"
+        with open(path, 'wb') as file:
+            pickle.dump(self, file)
+        print(f"Bootstrap saved under {path}")
+
+    # TODO: Finish this 
     def to_bootstrap_plot_dict(self) -> dict: 
         bootstrap_plot_dict = {}
         not_include = ("_causal_inference_tasks", 
@@ -226,11 +235,20 @@ class BootstrapComparison:
             in at least one passed Bootsrap instance."""
         return self._all_var_true_dag
 
+    def save(self, path: str = None):
+        if path is None:
+            path = self._comparison_name+".pkl"
+        with open(path, 'wb') as file:
+            pickle.dump(self, file)
+        print(f"Bootstrap Comparison saved under {path}")
+
+    # TODO: Finish this
     def get_comparison_plot_dict(self):
         plot_dict = {}
         for bootstrap in self._bootstraps:
             pass
 
+    # TODO: Finish this
     def to_comparison_plot_dict(self):
         comparison_plot_dict = {}
 

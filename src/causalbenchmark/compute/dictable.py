@@ -43,3 +43,13 @@ class Dictable:
     def from_pickle(cls, file_path: str):
         with open(file_path, 'rb') as f:
             return pickle.load(f)
+
+
+class Savable:
+
+    def save(self, name: str = None):
+        if name is None:
+            name = self._bootstrap_name+".pkl"
+        with open(name, 'wb') as file:
+            pickle.dump(self, file)
+        print(f"Bootstrap saved under {name}")
