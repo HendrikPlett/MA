@@ -9,5 +9,7 @@ __pycache__/
 test.ipynb
 
 # Data
-
 exp/cc_data
+
+# Simulation results
+exp/results
