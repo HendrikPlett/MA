@@ -13,18 +13,19 @@ import pickle
 # Third party
 
 # Own
+from .savable import Pickable
 from .algorithms import Algorithm
 from ..util import same_columns, bootstrap_sample, give_superlist, same_order, variables_increase
 from .causal_inference_task import CausalInferenceTask
 
-class Bootstrap():
+class Bootstrap(Pickable):
     """
     Create specified number of bootstrap samples from passed data, 
         use theses samples to create CausalInferenceTasks, fit them
         and compute average values across all bootstrap samples.
     """
     def __init__(self, 
-                 bootstrap_name: str, 
+                 name: str, 
                  algorithm: Algorithm,
                  data_to_bootstrap_from: Iterable[pd.DataFrame], 
                  sample_sizes: tuple, 
@@ -34,7 +35,7 @@ class Bootstrap():
         Initialize Bootstrap, passed variables cannot be changed later on.
 
         Args:
-            bootstrap_name (str): Ideally describing the passed arguments.
+            name (str): Ideally describing the passed arguments.
             algorithm (Algorithm): The Algorithm used to fit a structure 
                 to the data.
             data_to_bootstrap_from (Iterable[pd.DataFrame]): All passed 
@@ -58,7 +59,7 @@ class Bootstrap():
                    for size in sample_sizes), "Sample sizes must be a float between 0 and 1 or an integer"
         
         # --- Provided
-        self._bootstrap_name = bootstrap_name
+        super().__init__(name)
         self._algorithm = algorithm 
         self._data_to_bootstrap_from = data_to_bootstrap_from
         self._sample_sizes = sample_sizes
@@ -84,7 +85,7 @@ class Bootstrap():
 
     def get_bootstrap_name(self) -> str:
         """Get the name as passed in constructor."""
-        return self._bootstrap_name
+        return self._name
     
     def get_bootstrap_variables(self) -> list:
         """Get the variables passed via the dfs and true_dag in constructor."""
@@ -120,25 +121,6 @@ class Bootstrap():
         """
         return self._avg_r2_sort
     
-    def save(self, path: str = None):
-        if path is None:
-            path = self._bootstrap_name+".pkl"
-        with open(path, 'wb') as file:
-            pickle.dump(self, file)
-        print(f"Bootstrap saved under {path}")
-
-    # TODO: Finish this 
-    def to_bootstrap_plot_dict(self) -> dict: 
-        bootstrap_plot_dict = {}
-        not_include = ("_causal_inference_tasks", 
-                       "_algorithm")
-        for attr_name, attr_value in self.__dict__.items():
-            if attr_name not in not_include:
-                bootstrap_plot_dict[attr_name] = attr_value
-        bootstrap_plot_dict["_algorithm"] = self._algorithm.__dict__
-        
-        return bootstrap_plot_dict
-
     def _create_causal_inference_tasks(self):
         """
         Creates nr_bootstraps datasets and uses them
@@ -190,21 +172,21 @@ class Bootstrap():
         self._avg_r2_sort = float(np.average(r2_sorts, axis=0))
 
     
-class BootstrapComparison:
+class BootstrapComparison(Pickable):
     """
     Class comparing several Bootstrap instances. 
     In particular tracking differences in the variables used.
     """
     def __init__(self,
-                 comparison_name: str):
+                 name: str):
         """_summary_
 
         Args:
-            comparison_name (str): Ideally the factor by which 
+            name (str): Ideally the factor by which 
                 the passed Bootstrap instances differ.
         """
         # --- Provided
-        self._comparison_name = comparison_name
+        super().__init__(name)
         # --- Computed later
         self._bootstraps = []
         self._all_var = None
@@ -234,33 +216,6 @@ class BootstrapComparison:
         """Get the true DAG that contains all variables that are used 
             in at least one passed Bootsrap instance."""
         return self._all_var_true_dag
-
-    def save(self, path: str = None):
-        if path is None:
-            path = self._comparison_name+".pkl"
-        with open(path, 'wb') as file:
-            pickle.dump(self, file)
-        print(f"Bootstrap Comparison saved under {path}")
-
-    # TODO: Finish this
-    def get_comparison_plot_dict(self):
-        plot_dict = {}
-        for bootstrap in self._bootstraps:
-            pass
-
-    # TODO: Finish this
-    def to_comparison_plot_dict(self):
-        comparison_plot_dict = {}
-
-        for attr_name, attr_value in self.__dict__.items():
-            if attr_name == "_bootstraps":
-                comparison_plot_dict[attr_name] = [
-                    bootstrap.to_bootstrap_plot_dict for bootstrap in self._bootstraps
-                ]
-            else: 
-                comparison_plot_dict[attr_name] = attr_value
-
-        return comparison_plot_dict
     
     def _check_variable_validity(self, bstrp: Bootstrap):
         """

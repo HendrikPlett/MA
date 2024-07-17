@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 
 # Own 
-from .dictable import Dictable
 from ..util import pool_dfs, measure_time, same_columns
 from . import ut_igsp
 
