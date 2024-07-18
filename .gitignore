@@ -13,3 +13,7 @@ exp/cc_data
 
 # Simulation results
 exp/results
+*.pkl
+
+# Plots
+exp/vis/*.pdf
