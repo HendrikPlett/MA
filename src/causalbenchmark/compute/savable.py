@@ -20,8 +20,9 @@ class Pickable:
         Args:
             pre_path (str): The directory to save the pickle file in. Defaults to "results".
         """
-        name = os.path.join(pre_path, f"{self._name}.pkl")
-        os.makedirs(pre_path, exist_ok=True)
+        cwd = os.getcwd()
+        name = os.path.abspath(os.path.join(cwd, pre_path, f"{self._name}.pkl"))
+        os.makedirs(os.path.dirname(name), exist_ok=True)
         if os.path.exists(name):
             print(f"Info: Existing file '{name}' will be overwritten.")
         with open(name, 'wb') as file:
