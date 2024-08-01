@@ -24,42 +24,58 @@ class TestListOperations(unittest.TestCase):
     def test_has_duplicates(self):
         # Test on simple made up lists
         self.assertTrue(has_duplicates([1, 2, 3, 2]))
+        self.assertTrue(has_duplicates([1, 1, 1, 1]))
         self.assertFalse(has_duplicates([1, 2, 3, 4]))
-        self.assertTrue(has_duplicates(['a', 'b', 'c', 'a']))
+        self.assertFalse(has_duplicates(['a', 'b', 3, 4]))
+        self.assertTrue(has_duplicates(['a', 'b', 'c', 'a', 'c']))
+        self.assertTrue(has_duplicates(['a', 'b', 'c', 'd', 'd']))
         self.assertFalse(has_duplicates([]))
 
     def test_enforce_no_duplicates(self):
-        enforce_no_duplicates([[1, 2, 3], [4, 5, 6]]) # Should throw no exception
+        enforce_no_duplicates([[1, 2, 3, 4, 5, 6], [4, 5, 6]]) # Should throw no exception
+        enforce_no_duplicates([['a', 'b'], [4, 5, 6]]) # Should throw no exception
         with self.assertRaises(ValueError):
             enforce_no_duplicates([[1, 2, 3], [4, 5, 5]]) # Dublicates -> Should throw ValueError
+        with self.assertRaises(ValueError):
+            enforce_no_duplicates([[1, 2, 3, 4, 5, 1, 2], [4, 5, 6]])
 
     def test_give_superlist(self):
-        self.assertEqual(give_superlist([1, 2, 3, 4], [2, 3]), [1, 2, 3, 4])
+        self.assertEqual(give_superlist([1, 2, 3, 4], [1, 2, 3]), [1, 2, 3, 4])
+        self.assertEqual(give_superlist(['a', 'b'], ['a', 'b', 'c']), ['a', 'b', 'c'])
         self.assertEqual(give_superlist([2, 3], [1, 2, 3, 4]), [1, 2, 3, 4])
         self.assertEqual(give_superlist([], [1, 2, 3, 4]), [1, 2, 3, 4]) # Empty list case
         self.assertEqual(give_superlist([1, 2, 3], [1, 2, 3]), [1, 2, 3])
+        with self.assertRaises(ValueError):
+            give_superlist([1, 2, 2], [1, 2, 2, 3]) # Dublicates -> ValueError
         with self.assertRaises(ValueError):
             give_superlist([1, 2, 3], [3, 4, 5]) # No superlist exists -> ValueError
 
     def test_give_sublist(self):
         # Same lists as in test_give_superlist, only that the other list is asserted to be returned
+        self.assertEqual(give_superlist(['a', 'b'], ['a', 'b', 'c']), ['a', 'b', 'c'])
         self.assertEqual(give_sublist([1, 2, 3, 4], [2, 3]), [2, 3])
         self.assertEqual(give_sublist([2, 3], [1, 2, 3, 4]), [2, 3])
         self.assertEqual(give_sublist([], [1, 2, 3, 4]), [])
         self.assertEqual(give_superlist([1, 2, 3], [1, 2, 3]), [1, 2, 3])
         with self.assertRaises(ValueError):
-            give_sublist([1, 2, 3], [3, 4, 5])
+            give_superlist([1, 2, 2], [1, 2, 2, 3]) # Dublicates -> ValueError
+        with self.assertRaises(ValueError):
+            give_superlist([1, 2, 3], [3, 4, 5]) # No sublist exists -> ValueError
 
     def test_variables_increase(self):
         self.assertTrue(variables_increase([1, 2], [1, 2, 3, 4]))
+        self.assertTrue(variables_increase(['a', 'b'], ['a', 'b', 'c']))
         self.assertFalse(variables_increase([1, 2, 3], [1, 2]))
-        self.assertTrue(variables_increase([], [1, 2, 3]))
-        self.assertTrue(variables_increase([1, 2, 3], [1, 2, 3]))
+        self.assertTrue(variables_increase([], [1]))
+        self.assertTrue(variables_increase([1, 2], [1, 2]))
         with self.assertRaises(ValueError):
             variables_increase([1, 2, 3], [4, 5, 6])
+        with self.assertRaises(ValueError):
+            variables_increase([1, 2, 2], [1, 2, 2, 3])
 
     def test_same_order(self):
         self.assertTrue(same_order([1, 2, 3], [1, 2, 3, 4, 5]))
+        self.assertTrue(same_order([1, 2, 5], [1, 2, 4, 5]))
         self.assertFalse(same_order([1, 2, 3], [3, 2, 1, 4, 5]))
         self.assertTrue(same_order([], [1, 2, 3]))
         with self.assertRaises(ValueError):
