@@ -18,28 +18,6 @@ class TestDecorators(unittest.TestCase):
         self.assertEqual(result, 10)
         self.assertTrue(runtime > 0.1)
     
-    @patch('causalbenchmark.util.standardize_dfs')
-    def test_standardize_data_input(self, mock_standardize_dfs):
-        # We mock the standardize_dfs function as simply returning 
-        # the String 'standardize_data'.
-        mock_standardize_dfs.return_value = 'standardized_data'
-        
-        # Decorator will apply standardize_dfs function if 'standardize' is True
-        @standardize_data_input('standardize')
-        def fit_mock(data, standardize):
-            return data
-        
-        mock_standardize_dfs.assert_not_called()
-        # Case when standardize parameter is True
-        fit = fit_mock(standardize=True, data='mock_data')
-        self.assertEqual(fit, 'standardized_data')
-        mock_standardize_dfs.assert_called_once_with('mock_data')
-
-        # Case when standardize parameter is False
-        fit = fit_mock(standardize=False, data='mock_data')
-        self.assertEqual(fit, 'mock_data')
-        mock_standardize_dfs.assert_called_once_with('mock_data') # Cumulative calls
-
 
 class TestListOperations(unittest.TestCase):
 

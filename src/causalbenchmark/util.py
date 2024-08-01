@@ -24,19 +24,6 @@ def measure_time(func):
         return (result, runtime)
     return wrapper_fct
 
-def standardize_data_input(flag):
-    """Decorator that applies 'standardize_dfs' to 'data' input if the 'flag' input is True."""
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            flag_bool = kwargs.get(flag, False)
-            data = kwargs.get('data', None)        
-            if flag_bool and data is not None:
-                kwargs['data'] = standardize_dfs(data)
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
-
 
 #------------------------------------------------------
 # List operations
