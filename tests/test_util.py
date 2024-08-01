@@ -65,6 +65,10 @@ class TestDataFrameOperations(unittest.TestCase):
             'A': [13, 14, 15],
             'B': [16, 17, 18]
         })
+        self.df4 = pd.DataFrame({
+            'A': [1.3, 1.9, 14],
+            'B': [0.7, 0.4, 4.1]
+        })
         self.df_diff_columns = pd.DataFrame({
             'A': [1, 2, 3],
             'C': [4, 5, 6]
@@ -112,6 +116,48 @@ class TestDataFrameOperations(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             bootstrap_sample([self.df1, self.df2], [0.5, 0.5, 0.5], seed=1)
+
+    def test_standardize_dfs(self):
+        original_dfs = [self.df1, self.df2, self.df3, self.df4]
+        stand_dfs = standardize_dfs(original_dfs)
+        
+        # Check output format
+        self.assertIsInstance(stand_dfs, list)
+        self.assertEqual(len(stand_dfs), 4)
+        
+        # Test for correct shape, mean, sd, and correlation
+        for orig_df, stand_df in zip(original_dfs, stand_dfs):
+            # Shape
+            self.assertIsInstance(stand_df, pd.DataFrame)
+            self.assertEqual(stand_df.shape, orig_df.shape)
+            self.assertEqual(list(stand_df.columns), list(orig_df.columns))
+            # Mean, sd
+            for col in stand_df.columns:
+                self.assertAlmostEqual(stand_df[col].mean(), 0, places=5)
+                self.assertAlmostEqual(stand_df[col].std(), 1, places=5)
+            
+            # Correlation must have remained the same
+            pd.testing.assert_frame_equal(orig_df.corr(), stand_df.corr())
+        
+        # Ensure columns remain the same if different columns are passed in dfs
+        dfs_stand_diff = standardize_dfs([self.df4, self.df_diff_columns])
+        self.assertEqual(list(dfs_stand_diff[0].columns), list(self.df4.columns))
+        self.assertEqual(list(dfs_stand_diff[1].columns), list(self.df_diff_columns.columns))
+        
+        # Empty input should just do nothing
+        self.assertEqual(standardize_dfs([]), [])
+        
+        # Case of a single dataframe
+        df_stand_single = standardize_dfs([self.df4])
+        self.assertEqual(len(df_stand_single), 1)
+        self.assertAlmostEqual(df_stand_single[0]['A'].mean(), 0, places=5)
+        self.assertAlmostEqual(df_stand_single[0]['A'].std(), 1, places=5)
+        pd.testing.assert_frame_equal(self.df4.corr(), df_stand_single[0].corr())
+        
+        # Ensure that original data is unchanged and new data is created
+        original_df1 = self.df1.copy()
+        standardize_dfs([self.df1])
+        pd.testing.assert_frame_equal(self.df1, original_df1)
 
 
 class TestAdjacencyMatrixDataFrameOperations(unittest.TestCase):
