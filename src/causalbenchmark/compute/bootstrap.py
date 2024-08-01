@@ -15,7 +15,7 @@ import pickle
 # Own
 from .savable import Pickable
 from .algorithms import Algorithm
-from ..util import same_columns, bootstrap_sample, give_superlist, same_order, variables_increase
+from ..util import same_columns, bootstrap_sample, same_order, variables_increase, standardize_dfs
 from .causal_inference_task import CausalInferenceTask
 
 class Bootstrap(Pickable):
@@ -25,28 +25,33 @@ class Bootstrap(Pickable):
         and compute average values across all bootstrap samples.
     """
     def __init__(self, 
-                 name: str, 
+                 name: str,
+                 true_dag: pd.DataFrame,
                  algorithm: Algorithm,
                  data_to_bootstrap_from: Iterable[pd.DataFrame], 
                  sample_sizes: tuple, 
-                 nr_bootstraps: int,
-                 true_dag: pd.DataFrame):
+                 standardize_data: bool = False,
+                 nr_bootstraps: int = 100):
         """
         Initialize Bootstrap, passed variables cannot be changed later on.
 
         Args:
-            name (str): Ideally describing the passed arguments.
+            name (str): Ideally describing the passed arguments, used as title
+                if Bootstrap is plotted or name if Bootstrap is stored.
+            true_dag (pd.DataFrame): The causal structure according to
+                which the data_to_bootstrap_from was generated. Must include
+                the same variables as the passed data.
             algorithm (Algorithm): The Algorithm used to fit a structure 
                 to the data.
             data_to_bootstrap_from (Iterable[pd.DataFrame]): All passed 
                 dfs must have the same columns, will also be checked.
             sample_sizes (tuple): Either a percentage or number. One size
                 for each passed df.
+            standardize_data (bool): Whether to standardize each column in 
+                each df to mean=0 and sd=1. Defaults to False.
             nr_bootstraps (int): How many bootstrap samples (and thus 
-                CausalInferenceTask instances) will be created.
-            true_dag (pd.DataFrame): The causal structure according to
-                which the data_to_bootstrap_from was generated. Must include
-                the same variables as the passed data.
+                CausalInferenceTask instances) will be created. Defaults
+                to 100.
         """
         # --- Check validity of input
         assert len(data_to_bootstrap_from)>=1, "No data passed"
@@ -60,11 +65,14 @@ class Bootstrap(Pickable):
         
         # --- Provided
         super().__init__(name)
+        self._true_dag = true_dag
         self._algorithm = algorithm 
-        self._data_to_bootstrap_from = data_to_bootstrap_from
+        if standardize_data:
+            self._data_to_bootstrap_from = standardize_dfs(data_to_bootstrap_from)
+        else:
+            self._data_to_bootstrap_from = data_to_bootstrap_from
         self._sample_sizes = sample_sizes
         self._nr_bootstraps = nr_bootstraps
-        self._true_dag = true_dag
         # --- Provided implicitly
         self._bootstrap_variables = true_dag.columns.to_list()
         # --- Computed later
@@ -177,13 +185,14 @@ class BootstrapComparison(Pickable):
     Class comparing several Bootstrap instances. 
     In particular tracking differences in the variables used.
     """
-    def __init__(self,
-                 name: str):
-        """_summary_
+    def __init__(self, name: str):
+        """
+        Initializes the Bootstrap Comparison.
 
         Args:
             name (str): Ideally the factor by which 
                 the passed Bootstrap instances differ.
+                Used as name when instance is saved. 
         """
         # --- Provided
         super().__init__(name)
