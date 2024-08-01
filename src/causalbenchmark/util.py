@@ -7,6 +7,7 @@ Util functions for the causalbenchmark package.
 import pandas as pd 
 from typing import Iterable, Union
 import time
+from functools import wraps
 
 
 #------------------------------------------------------
@@ -14,6 +15,7 @@ import time
 
 def measure_time(func):
     """Decorator to measure the runtime"""
+    @wraps(func)
     def wrapper_fct(*args, **kwargs):
         start_time = time.time()
         result = func(*args, **kwargs)
@@ -21,6 +23,19 @@ def measure_time(func):
         runtime = end_time - start_time
         return (result, runtime)
     return wrapper_fct
+
+def standardize_data_input(flag):
+    """Decorator that applies 'standardize_dfs' to 'data' input if the 'flag' input is True."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            flag_bool = kwargs.get(flag, False)
+            data = kwargs.get('data', None)        
+            if flag_bool and data is not None:
+                kwargs['data'] = standardize_dfs(data)
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 #------------------------------------------------------
@@ -102,6 +117,16 @@ def same_order(first: list, second: list) -> bool:
 
 #------------------------------------------------------
 # Data Dataframe operations
+
+def standardize_dfs(dfs: Iterable[pd.DataFrame]) -> list[pd.DataFrame]:
+    """Standardizes each column in each passed df to (mean, sd)=(0,1)."""
+    stand_dfs = []
+    for df in dfs:
+        mean = df.mean()
+        sd = df.std()
+        sd.replace(0,1) # Handle case of 0 standard deviation
+        stand_dfs.append((df-mean)/sd)
+    return stand_dfs
 
 def pool_dfs(dfs: Iterable[pd.DataFrame]) -> pd.DataFrame:
     """
