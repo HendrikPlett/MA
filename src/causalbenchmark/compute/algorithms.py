@@ -7,12 +7,14 @@ from abc import ABC, abstractmethod
 from typing import Iterable
 import numpy as np
 import pandas as pd
+from functools import wraps
 
 # Own 
 from ..util import pool_dfs, measure_time, same_columns
 from . import ut_igsp
 
 # Third party
+from sempler.utils import dag_to_cpdag
 from causallearn.search.ConstraintBased.PC import pc
 import ges
 import gies
@@ -22,6 +24,45 @@ from golempckg import fit_golem, postprocess
 from CausalDisco.baselines import var_sort_regress, r2_sort_regress
 import causalicp
 
+
+#------------------------------------------------------
+#------------------------------------------------------
+# Helper
+
+def _linear_to_binary(adj_mat: np.ndarray, var: list[str]):
+    """
+    Input[i,j]!=0 is transformed to Output[i,j]=1 and 
+    index/columns are added.
+    """
+    adj_mat[adj_mat != 0] = 1
+    return pd.DataFrame(adj_mat, index=var, columns=var)
+
+def return_cpdag_if_wanted(flag_name):
+    """Creates decorator which applies dag_to_cpdag if the instance variable `attr_name` is True."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            transform_bool = getattr(self, flag_name) # Get bool whether transformation is required
+            if not isinstance(transform_bool, bool):
+                raise ValueError(f"Instance variable '{flag_name}' must be True or False")
+            dag_adj_mat_df = func(self, *args, **kwargs) # Get result of wrapped function
+            if transform_bool is False:
+                # No transformation to cpdag required
+                return dag_adj_mat_df
+            # Transformation to cpdag required
+            try:
+                # Apply transformation
+                cpdag_np = dag_to_cpdag(dag_adj_mat_df.values)
+                var = dag_adj_mat_df.columns
+                return pd.DataFrame(cpdag_np, index=var, columns=var)
+            except ValueError as e:
+                print(f"Passed graph is not a valid DAG: {e}")
+                return dag_adj_mat_df # Return original df on error     
+        return wrapper
+    return decorator
+
+
+#------------------------------------------------------
 #------------------------------------------------------
 # Abstract base class
 
@@ -58,7 +99,12 @@ class Algorithm(ABC):
 
 
 #------------------------------------------------------
+#------------------------------------------------------
 # Algorithm implementations
+
+
+#------------------------------------------------------
+# Constraint based
 
 class PC(Algorithm):
     """Encapsulates PC implementation from causal-learn package."""
@@ -122,6 +168,57 @@ class PC(Algorithm):
 
         return pd.DataFrame(adj_matrix, index=var, columns=var)
 
+
+class UT_IGSP(Algorithm):
+    """Encapsulates UT_IGSP implementation from causaldag package."""    
+    def __init__(self,
+                 alpha_ci: float, 
+                 alpha_inv: float, 
+                 debug=0, 
+                 completion="gnies", 
+                 test="hsic", 
+                 obs_idx=0):
+        """
+        Initialize UT_IGSP object with desired hyperparameters.
+
+        Args:
+            alpha_ci (float): Level of conditional independence test.
+            alpha_inv (float): Level of test that two Gaussians are equal.
+            completion (str, optional): What equivalence class to compute
+                based on UT-IGSP's output. Defaults to "gnies".
+            test (str, optional): What test to use. Options: "hsic", "gauss".
+                Defaults to "hsic".
+            obs_idx (int, optional): The index of the observational data in the
+                passed list of dataframes. Defaults to 0.
+        """
+        super().__init__(self.__class__.__name__)
+        self._alpha_ci = alpha_ci
+        self._alpha_inv = alpha_inv
+        self._debug = debug
+        self._completion = completion
+        self._test = test
+        self._obs_idx = obs_idx
+
+    @measure_time
+    def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
+        """See superclass fit fct. for documentation."""
+        if not same_columns(data):
+            raise ValueError("Not all passed dfs have the same columns.")
+        ut_fit = ut_igsp.fit(
+            data=[df.values for df in data],
+            alpha_ci=self._alpha_ci,
+            alpha_inv=self._alpha_inv,
+            debug=self._debug, 
+            completion=self._completion,
+            test=self._test,
+            obs_idx=self._obs_idx
+        )
+        fitted_icpdag = ut_fit[0] # Get ICPDAG
+        var = data[0].columns
+        return pd.DataFrame(fitted_icpdag, index=var, columns=var)
+
+#------------------------------------------------------
+# Score based
 
 class GES(Algorithm):
     """Encapsulates GES implementation from ges package."""
@@ -252,9 +349,13 @@ class GNIES(Algorithm):
         return pd.DataFrame(estimate, index=var, columns=var)
 
 
+#------------------------------------------------------
+# Continuous optimization
+
 class NoTears(Algorithm):
     """Encapsulates NoTears implementation from notears package."""
     def __init__(self,
+                 return_cpdag: bool = False,
                  lambda1: float = 0.1,
                  loss_type: str = 'l2',
                  max_iter: int = 100,
@@ -266,6 +367,8 @@ class NoTears(Algorithm):
         Initialize NoTears object with desired hyperparameters.
 
         Args:
+            return_cpdag (bool): Whether to transform NoTEARS output into 
+                a CPAG. Defaults to False.
             lambda1 (float, optional): L1 penalty parameter for objective 
                 function. Defaults to 0.1.
             loss_type (str, optional): Loss type employed in objective function.
@@ -273,6 +376,7 @@ class NoTears(Algorithm):
             For implemenation related parameters, see notears documentation.
         """
         super().__init__(alg_name=self.__class__.__name__)
+        self._return_cpdag = return_cpdag
         self._lambda1 = lambda1
         self._loss_type = loss_type
         self._max_iter = max_iter
@@ -281,6 +385,7 @@ class NoTears(Algorithm):
         self._w_threshold = w_threshold
 
     @measure_time
+    @return_cpdag_if_wanted('_return_cpdag')
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
         """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
@@ -302,6 +407,7 @@ class Golem(Algorithm):
     """Encapsulates Golem implementation from golempckg package."""    
     def __init__(self,
                 equal_variances: bool,
+                return_cpdag: bool = False,
                 lambda_1: float = None,
                 lambda_2: float = None,
                 postproc_threshold: float = 0.3,
@@ -318,6 +424,8 @@ class Golem(Algorithm):
                 when building the objective function. If True, objective function
                 will be based on the MSE error, if False, objective function 
                 will be bassed on gaussian likelihood.
+            return_cpdag (bool): Whether to transform NoTEARS output into 
+                a CPAG. Defaults to False.
             lambda_1 (float, optional): L1 penalty parameter. Defaults to 2e-2 
                 or 5.0 depending on equal_variances.
             lambda_2 (float, optional): L2 penalty parameter. Defaults to 2r-3
@@ -328,6 +436,7 @@ class Golem(Algorithm):
         """
         super().__init__(alg_name=self.__class__.__name__)
         self._equal_variances = equal_variances
+        self._return_cpdag = return_cpdag
         # Default parameters recommended in golem repository.
         if equal_variances and lambda_1 is None and lambda_2 is None:
             self._lambda_1=2e-2, 
@@ -344,6 +453,7 @@ class Golem(Algorithm):
         self._checkpoint_iter = checkpoint_iter
     
     @measure_time
+    @return_cpdag_if_wanted('_return_cpdag')
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
         """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
@@ -361,6 +471,8 @@ class Golem(Algorithm):
         var = pooled_data.columns
         return _linear_to_binary(adj_mat, var)
 
+#------------------------------------------------------
+# Sortability based
 
 class VarSortRegress(Algorithm):
     """Encapsulates VarSortRegress implementation from CausalDisco package."""    
@@ -390,6 +502,10 @@ class R2SortRegress(Algorithm):
         adj_mat = r2_sort_regress(X=pooled_data.values) # Returns linear adj. matrix
         var = pooled_data.columns
         return _linear_to_binary(adj_mat, var)
+
+
+#------------------------------------------------------
+# Invariance based
 
 class ICP(Algorithm):
     """Encapsulates ICP implementation from causalicp package."""    
@@ -462,62 +578,5 @@ class ICP(Algorithm):
         adj_matrix.iloc[rows, cols] = 1
         return adj_matrix
         
-class UT_IGSP(Algorithm):
-    """Encapsulates UT_IGSP implementation from causaldag package."""    
-    def __init__(self,
-                 alpha_ci: float, 
-                 alpha_inv: float, 
-                 debug=0, 
-                 completion="gnies", 
-                 test="hsic", 
-                 obs_idx=0):
-        """
-        Initialize UT_IGSP object with desired hyperparameters.
-
-        Args:
-            alpha_ci (float): Level of conditional independence test.
-            alpha_inv (float): Level of test that two Gaussians are equal.
-            completion (str, optional): What equivalence class to compute
-                based on UT-IGSP's output. Defaults to "gnies".
-            test (str, optional): What test to use. Options: "hsic", "gauss".
-                Defaults to "hsic".
-            obs_idx (int, optional): The index of the observational data in the
-                passed list of dataframes. Defaults to 0.
-        """
-        super().__init__(self.__class__.__name__)
-        self._alpha_ci = alpha_ci
-        self._alpha_inv = alpha_inv
-        self._debug = debug
-        self._completion = completion
-        self._test = test
-        self._obs_idx = obs_idx
-
-    @measure_time
-    def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
-        """See superclass fit fct. for documentation."""
-        if not same_columns(data):
-            raise ValueError("Not all passed dfs have the same columns.")
-        ut_fit = ut_igsp.fit(
-            data=[df.values for df in data],
-            alpha_ci=self._alpha_ci,
-            alpha_inv=self._alpha_inv,
-            debug=self._debug, 
-            completion=self._completion,
-            test=self._test,
-            obs_idx=self._obs_idx
-        )
-        fitted_icpdag = ut_fit[0] # Get ICPDAG
-        var = data[0].columns
-        return pd.DataFrame(fitted_icpdag, index=var, columns=var)
 
 
-#------------------------------------------------------
-# Helper
-
-def _linear_to_binary(adj_mat: np.ndarray, var: list[str]):
-    """
-    Input[i,j]!=0 is transformed to Output[i,j]=1 and 
-    index/columns are added.
-    """
-    adj_mat[adj_mat != 0] = 1
-    return pd.DataFrame(adj_mat, index=var, columns=var)
