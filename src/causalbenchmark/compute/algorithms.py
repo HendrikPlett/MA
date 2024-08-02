@@ -38,7 +38,7 @@ def _linear_to_binary(adj_mat: np.ndarray, var: list[str]):
     return pd.DataFrame(adj_mat, index=var, columns=var)
 
 def return_cpdag_if_wanted(flag_name):
-    """Creates decorator which applies dag_to_cpdag if the instance variable `attr_name` is True."""
+    """Creates decorator which applies dag_to_cpdag if the instance variable `flag_name` is True."""
     def decorator(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
