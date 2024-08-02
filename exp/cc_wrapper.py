@@ -33,13 +33,13 @@ CHAMBER_CONFIGURATIONS = {
 #------------------------------------------------------
 # Variable groups for chamber: lt, configuration: camera
 
-CORE_VAR =  ['red', 'green', 'blue', 'current', 'ir_1', 'ir_2', 
-                'ir_3', 'vis_1', 'vis_2', 'vis_3'] # 10 Variables
+SMALL_VAR = ["red", "green", "blue", "current", 
+        "ir_1", "vis_1", "ir_2", "vis_2", "ir_3", "vis_3"] # 10 Variables
 
-WO_PARAM_VAR = ['red', 'green', 'blue', 'current', 'ir_1', 
-                'ir_2', 'ir_3', 'vis_1', 'vis_2', 'vis_3', 
-                'pol_1', 'pol_2', 'angle_1', 'angle_2', 
-                'l_11', 'l_12', 'l_21', 'l_22', 'l_31', 'l_32'] # 20 Variables
+MID_VAR = ["red", "green", "blue", "current", "pol_1", "pol_2",
+        "angle_1", "angle_2",
+        "ir_1", "vis_1", "ir_2", "vis_2", "ir_3", "vis_3", "l_11", "l_12", "l_21", "l_22",
+        "l_31", "l_32"] # 20 Variables
 
 ALL_VAR = ["red", "green", "blue", "osr_c", "v_c", "current", "pol_1", "pol_2",
         "osr_angle_1", "osr_angle_2", "v_angle_1", "v_angle_2", "angle_1", "angle_2",
