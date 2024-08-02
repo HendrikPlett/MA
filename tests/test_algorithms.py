@@ -5,6 +5,7 @@ from unittest.mock import patch, Mock
 from functools import wraps
 import numpy as np
 import pandas as pd
+import string
 
 from causalbenchmark.compute.algorithms import Algorithm, PC, UT_IGSP, GES, GIES, GNIES, NoTears, Golem, VarSortRegress, R2SortRegress, ICP
 
@@ -169,50 +170,74 @@ class TestPDAGTransform(unittest.TestCase):
         self.run_test(alg=ICP(target='C'),
                       desired_result=dr)
 
-"""
 class TestFullRun(unittest.TestCase):
     
-    
-    def setUp():
-        # Create TrueDAG and data
-        ... 
+    def setUp(self):
+        """
+        Generates sample data.
+        """
+        # Choose size and structure
+        self.d = 6 # Lower than 26, no more variable names
+        self.n = 1000
+        W = np.diag(np.ones(self.d-1), 1)
+        # Compute data based on noise
+        def comp_data(N):
+            INT = np.eye(self.d) - np.transpose(W)
+            return np.transpose(np.linalg.inv(INT)@N)
 
-    def check_output_format():
-        ...    
+        N = np.random.randn(self.d, self.n)
+        X = comp_data(N)
+
+        N1 = np.random.uniform(0,1, (self.d,self.n))
+        X1 = comp_data(N1)
+        self.var = list(string.ascii_uppercase[:self.d])
+        self.data = [pd.DataFrame(X, columns=self.var), 
+                     pd.DataFrame(X1, columns=self.var)]
+
+
+    def check_output_format(self, result: pd.DataFrame, runtime: float):
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertIsInstance(runtime, float)
+        self.assertEqual(result.shape, (self.d, self.d))
+        self.assertEqual(list(result.columns), self.var)
+        self.assertEqual(list(result.index), self.var)
         
-    def test_PC_algorithm():
-        ...
+    def test_PC_algorithm(self):
+        self.check_output_format(*PC(alpha=0.01).fit(self.data))
+        self.check_output_format(*PC(alpha=0.05).fit(self.data))
+        self.check_output_format(*PC(alpha=0.50).fit(self.data))
 
-    def test_UT_IGSP_algorithm():
-        ...
 
-    def test_GES_algorithm():
-        ...
+    def test_UT_IGSP_algorithm(self):
+        self.check_output_format(*UT_IGSP(alpha_ci=0.05, alpha_inv=0.05).fit(self.data))
+        self.check_output_format(*UT_IGSP(alpha_ci=0.10, alpha_inv=0.10).fit(self.data))
+        self.check_output_format(*UT_IGSP(alpha_ci=0.20, alpha_inv=0.20).fit(self.data))
 
-    def test_GIES_algorithm():
-        ...
+    def test_GES_algorithm(self):
+        self.check_output_format(*GES().fit(self.data))
 
-    def test_GNIES_algorithm():
-        ...
+    def test_GIES_algorithm(self):
+        self.check_output_format(*GIES(interventions=[['A'], ['B']]).fit(self.data))
+        self.check_output_format(*GIES(interventions=[['A', 'B'], ['C']]).fit(self.data))
 
-    def test_NoTEARS_algorithm_dag():
-        ...
+    def test_GNIES_algorithm(self):
+        self.check_output_format(*GNIES().fit(self.data))
 
-    def test_NoTEARS_algorithm_cpdag():
-        ...
+    def test_NoTEARS_algorithm_(self):
+        self.check_output_format(*NoTears(return_cpdag=False).fit(self.data))
+        self.check_output_format(*NoTears(return_cpdag=True).fit(self.data))
 
-    def test_GOLEM_algorithm_dag():
-        ...
+    def test_GOLEM_algorithm(self):
+        self.check_output_format(*Golem(equal_variances=False, return_cpdag=False).fit(self.data))
+        self.check_output_format(*Golem(equal_variances=False, return_cpdag=True).fit(self.data))
+        self.check_output_format(*Golem(equal_variances=True, return_cpdag=False).fit(self.data))
+        self.check_output_format(*Golem(equal_variances=True, return_cpdag=True).fit(self.data))
 
-    def test_GOLEM_algorithm_cpdag():
-        ...
+    def test_VarSortRegress_algorithm(self):
+        self.check_output_format(*VarSortRegress().fit(self.data))
 
-    def test_VarSortRegress_algorithm():
-        ...
-
-    def test_R2SortRegress_algorithm():
-        ...
-"""
+    def test_R2SortRegress_algorithm(self):
+        self.check_output_format(*R2SortRegress().fit(self.data))
 
 
 if __name__ == '__main__':
