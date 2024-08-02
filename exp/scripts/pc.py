@@ -115,6 +115,9 @@ def increase_alpha(alphas: list):
                 sample_sizes=[SAMPLE_SIZE],
             )
         )
+    bstrpcomp.run_comparison()
+    bstrpcomp.pickle()
+
 
 
 if __name__ == "__main__":
