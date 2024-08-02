@@ -25,14 +25,24 @@ def main():
             pos=POSITIONS_LT, 
             latex_transf = LATEX_NAME
         )
-        bstrpcompvis.pair_comp_plot()
         # Get name of pkl file without ending
         name_with_ending = os.path.basename(file)
         name_without_ending, _ = os.path.splitext(name_with_ending)
-        SAVE_PATH = os.path.join(THIS_FILE_DIR, f"{name_without_ending}.pdf")
-        if os.path.exists(SAVE_PATH):
-            print(f"Warning: Plot {SAVE_PATH} exists; will be overwritten!")
-        bstrpcompvis.save_fig(SAVE_PATH)
+
+        # Pairwise comparison plot
+        SAVE_PATH1 = os.path.join(THIS_FILE_DIR, f"{name_without_ending}-P.pdf") # 'P' for pairwise
+        if os.path.exists(SAVE_PATH1):
+            print(f"Warning: Plot {SAVE_PATH1} exists; will be overwritten!")
+        bstrpcompvis.pair_comp_plot()
+        bstrpcompvis.save_fig(SAVE_PATH1)
+
+        # Evolution plot
+        SAVE_PATH2 = os.path.join(THIS_FILE_DIR, f"{name_without_ending}-E.pdf") # 'E' for evolution
+        if os.path.exists(SAVE_PATH2):
+            print(f"Warning: Plot {SAVE_PATH2} exists; will be overwritten!")
+        bstrpcompvis.evolution_plot()
+        bstrpcompvis.save_fig(SAVE_PATH2)
+
 
 if __name__=="__main__":
     main()
