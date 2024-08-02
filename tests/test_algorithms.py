@@ -171,10 +171,13 @@ class TestPDAGTransform(unittest.TestCase):
                       desired_result=dr)
 
 class TestFullRun(unittest.TestCase):
-    
+    """
+    Test whether algorithms run without breaking and return the correct output format.
+    """
+
     def setUp(self):
         """
-        Generates sample data.
+        Simulate some data.
         """
         # Choose size and structure
         self.d = 6 # Lower than 26, no more variable names
