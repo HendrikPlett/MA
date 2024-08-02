@@ -91,14 +91,26 @@ class CausalInferenceTask:
     
     def _compute_sortability(self):
         """ Computes and saves Variance and R2 Sortability of the passed dataset. """
-        self._var_sort = var_sortability(
-            X=pool_dfs(self._data).values, 
-            W=self._true_dag.values
-        )
-        self._r2_sort = r2_sortability(
-            X=pool_dfs(self._data).values, 
-            W=self._true_dag.values
-        )
+        try:
+            self._var_sort = var_sortability(
+                X=pool_dfs(self._data).values, 
+                W=self._true_dag.values
+            )
+        except ValueError as e: # Can happen if data contains too many columns with 0 variance 
+            self._var_sort = 0
+        except Exception as e:
+            self._var_sort = 0
+            print(f"Exception thrown while computing var sortability: {e}")
+        try:
+            self._r2_sort = r2_sortability(
+                X=pool_dfs(self._data).values, 
+                W=self._true_dag.values
+            )
+        except ValueError as e: # Can happen if data contains too many columns with 0 variance
+            self._r2_sort = 0
+        except Exception as e:
+            self._r2_sort = 0
+            print(f"Exception thrown while camputing r2 sortability: {e}")
     
     def _consistent_extensions(self):
         """ 
@@ -109,7 +121,7 @@ class CausalInferenceTask:
         # Handle the case of zero valid consistent extensions
         if len(self._all_cons_extensions) == 0: 
             print(f"Nr cons extensions: {len(self._all_cons_extensions)}")
-            avg_dag = np.zeros_like(self._true_dag.values)
+            avg_dag = np.zeros_like(self._true_dag.values) # Alternative: Take PDAG instead of 0 or pass
         else: 
             avg_dag = np.average(self._all_cons_extensions, axis=0)
         self._average_cons_extension = pd.DataFrame(
