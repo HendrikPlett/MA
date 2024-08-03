@@ -3,6 +3,12 @@ Ground truth DAGs for the CausalChamber python package.
 Copied from 
 https://github.com/juangamella/causal-chamber/blob/main/src/causalchamber/ground_truth.py
 on 18. July 2024
+
+Local copy needed because when running the code on ETH's EULER cluster:
+- cc_wrapper is executed on the compute node
+- importing the "CausalChamber" package makes an http request
+- this is not possible on EULER's compute nodes
+- Hence, everything needed from the "CausalChamber" package must be stored locally
 """
 
 
