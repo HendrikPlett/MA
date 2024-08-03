@@ -79,6 +79,8 @@ class Bootstrap(Pickable):
         self._causal_inference_tasks = []
         self._avg_avg_cons_extension = None
         self._avg_runtime = None
+        self._avg_no_cons_extensions = None
+        self._avg_alg_crashed = None
         self._avg_var_sort = None
         self._avg_r2_sort = None
 
@@ -162,11 +164,16 @@ class Bootstrap(Pickable):
         """
         est_avg_cons_extensions = []
         runtimes = []
+        no_cons_extensions = []
+        alg_crashed = []
         var_sorts = []
         r2_sorts = []
+        # Fill lists by iterating over all causal inference tasks
         for task in self._causal_inference_tasks:
             est_avg_cons_extensions.append(task.get_average_cons_extension().values)
             runtimes.append(task.get_runtime())
+            no_cons_extensions.append(task.get_no_consistent_extensions_flag())
+            alg_crashed.append(task.get_algorithm_crashed_flag())
             var_sorts.append(task.get_var_sort())
             r2_sorts.append(task.get_r2_sort())
         _avg_avg_cons_extension_np = np.average(est_avg_cons_extensions, axis=0)
@@ -176,6 +183,8 @@ class Bootstrap(Pickable):
             columns=self._bootstrap_variables
         )
         self._avg_runtime = float(np.average(runtimes, axis=0))
+        self._avg_no_cons_extensions = float(np.average(no_cons_extensions))
+        self._avg_alg_crashed = float(np.average(alg_crashed))
         self._avg_var_sort = float(np.average(var_sorts, axis=0))
         self._avg_r2_sort = float(np.average(r2_sorts, axis=0))
 

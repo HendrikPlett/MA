@@ -45,10 +45,16 @@ class CausalInferenceTask:
         self._data = data
         self._true_dag = true_dag
         # --- Computed later
+        # Algorithm output
         self._estimated_graph = None
         self._runtime = None
+        # Consistent extensions
         self._all_cons_extensions = None
         self._average_cons_extension = None 
+        # Failure counter
+        self._no_cons_extensions = False
+        self._algorithm_crashed = False
+        # Sortability
         self._var_sort = None
         self._r2_sort = None
 
@@ -59,9 +65,18 @@ class CausalInferenceTask:
             extension of the fitted PDAG.
         """
         self._compute_sortability()
-        self._estimated_graph, self._runtime = self._algorithm.fit(
-            data=self._data
-        )
+        try:
+            self._estimated_graph, self._runtime = self._algorithm.fit(
+                data=self._data
+            )
+        except Exception as e:
+            print(f"Exception thrown while fitting the algorithm: {e}")
+            self._algorithm_crashed = True
+            var = list(self._true_dag.columns)
+            dim = len(var)
+            # Set values for algorithm not to crash. 
+            self._estimated_graph = pd.DataFrame(np.zeros((dim, dim)), columns=var, index=var)
+            self._runtime = 0
         self._consistent_extensions()
         
 
@@ -80,6 +95,14 @@ class CausalInferenceTask:
     def get_average_cons_extension(self) -> pd.DataFrame:
         """ Gets the average of all consistent extensions. """
         return self._average_cons_extension
+    
+    def get_no_consistent_extensions_flag(self) -> bool:
+        """ Gets whether the returned pdag has no consistent extensions. """
+        return self._no_cons_extensions
+
+    def get_algorithm_crashed_flag(self) -> bool:
+        """ Gets whether the causal discovery algorithm crashed while running. """
+        return self._algorithm_crashed
 
     def get_var_sort(self) -> float:
         """ Gets the Variance Sortability of the passed dataset. """
@@ -120,7 +143,7 @@ class CausalInferenceTask:
         self._all_cons_extensions = all_dags(self._estimated_graph.values).tolist()
         # Handle the case of zero valid consistent extensions
         if len(self._all_cons_extensions) == 0: 
-            print(f"Nr cons extensions: {len(self._all_cons_extensions)}")
+            self._no_cons_extensions = True
             avg_dag = np.zeros_like(self._true_dag.values) # Alternative: Take PDAG instead of 0 or pass
         else: 
             avg_dag = np.average(self._all_cons_extensions, axis=0)
