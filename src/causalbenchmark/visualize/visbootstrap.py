@@ -19,6 +19,7 @@ from .edges import Edges
 from .nodes import Nodes
 from causalbenchmark.compute import Bootstrap, BootstrapComparison
 
+matplotlib.use('Agg')
 
 _FIGSIZE = (10,8) # Sizes of each subfigure
 _AX_WIDTH_RATIO = [7/8, 1/16, 1/16] # Ratio of the three axeses in a subfigure
@@ -451,5 +452,7 @@ def _save_figure(fig: Figure, path: str):
     """Save passed figure under passed path."""
     try:
         fig.savefig(path, format="pdf", dpi=300, bbox_inches='tight')
+        plt.clf()
+        plt.close(fig)
     except Exception as e:
         print(f"Failed to save the figure: {e}")
