@@ -117,6 +117,14 @@ class Bootstrap(Pickable):
         """Average runtime of 'Algorithm' averaged over all bootstrapped CI-Tasks."""
         return self._avg_runtime
     
+    def get_avg_no_cons_extension(self) -> float:
+        """Whether the returned PDAG has not consistent extensions, averaged over all bootstrapped CI-Tasks."""
+        return self._avg_no_cons_extensions
+    
+    def get_avg_alg_crashed(self) -> float:
+        """Whether the algorithm crashed, averaged over all bootstrapped CI-Tasks."""
+        return self._avg_alg_crashed
+
     def get_avg_var_sort(self) -> float:
         """
         Average Var-Sortability of the bootstrapped dataset across 

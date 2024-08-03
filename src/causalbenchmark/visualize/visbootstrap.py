@@ -11,6 +11,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.figure import Figure
 import networkx as nx
 from typing import Iterable
+from datetime import timedelta
 
 # Own
 from .edgelogic import TRUE_EDGES, TP, FP, TP_DIFF, FP_DIFF, EdgeLogic
@@ -128,8 +129,11 @@ class VisBootstrapComparison:
             bstrps = bstrp_comp.get_bootstraps()
             graphs = [bstrp.get_avg_avg_cons_extension() for bstrp in bstrps]
             titles = [bstrp.get_bootstrap_name() for bstrp in bstrps]
-            var_sortabilities = [bstrp.get_avg_var_sort() for bstrp in bstrps]
-            r2_sortabilities = [bstrp.get_avg_r2_sort() for bstrp in bstrps]
+            var_sortabilities = [round(bstrp.get_avg_var_sort(),2) for bstrp in bstrps]
+            r2_sortabilities = [round(bstrp.get_avg_r2_sort(),2) for bstrp in bstrps]
+            runtimes = [round(bstrp.get_avg_runtime()) for bstrp in bstrps]
+            no_cons_extensions = [round(bstrp.get_avg_no_cons_extension(),2) for bstrp in bstrps]
+            alg_crashed = [round(bstrp.get_avg_alg_crashed(),2) for bstrp in bstrps]
             true_graph = bstrp_comp.get_all_var_true_DAG()
             nr_bstrps = len(bstrp_comp)
         else:
@@ -140,6 +144,9 @@ class VisBootstrapComparison:
         self._titles = titles
         self._var_sortabilities = var_sortabilities
         self._r2_sortabilities = r2_sortabilities
+        self._runtimes = runtimes
+        self._no_cons_extensions = no_cons_extensions
+        self._alg_crashed = alg_crashed
         self._true_graph = true_graph
         self._nr_bstrps = nr_bstrps
         self._pos = kwargs.get("pos")
@@ -256,9 +263,16 @@ class VisBootstrapComparison:
     def _pairwise_add_sortability(self, ax: matplotlib.axes.Axes, row: int, col: int):
         """Add sortability information to axes if needed for that row/col combination."""
         if row == col:
+            lines = [
+                f"Var Sort: {self._var_sortabilities[row]}",
+                f"R2 Sort: {self._r2_sortabilities[row]}",
+                f"Runtime: {str(timedelta(seconds=self._runtimes[row]))}",
+                f"Invalid: {self._no_cons_extensions[row]}",
+                f"Crashed: {self._alg_crashed[row]}"
+            ]
             _text_top_left(
                 axes=ax,
-                txt=f'Var Sort: {round(self._var_sortabilities[row],2)} \n R2 Sort: {round(self._r2_sortabilities[row],2)}'
+                txt="\n".join(lines)
                 )
     
     #------------------------------------------------------
@@ -373,11 +387,18 @@ class VisBootstrapComparison:
 
     def _evolutions_add_sortability(self, ax: matplotlib.axes.Axes, row: int, col: int):
         """Add sortability information to passed axes if col==3 and row!=-1."""
-        if not row == -1 and col == 3:
+        if not row == -1 and col == 2:
+            index = (self._nr_bstrps-1) if (row == self._nr_bstrps) else row
+            lines = [
+                f"Var Sort: {self._var_sortabilities[index]}",
+                f"R2 Sort: {self._r2_sortabilities[index]}",
+                f"Runtime: {str(timedelta(seconds=self._runtimes[index]))}",
+                f"Invalid: {self._no_cons_extensions[index]}",
+                f"Crashed: {self._alg_crashed[index]}"
+            ]
             _text_top_left(
                 axes=ax,
-                txt=f'''Var Sort: {round(self._var_sortabilities[row],2)} \n
-                    R2 Sort: {round(self._r2_sortabilities[row],2)}'''
+                txt="\n".join(lines)
                 )
 
 
