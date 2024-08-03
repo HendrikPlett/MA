@@ -16,7 +16,7 @@ def main():
     # Retrieve all pickle files
     pickle_dir = os.path.join(os.path.dirname(THIS_FILE_DIR), RESULT_DIR)
     pickle_files = [os.path.join(pickle_dir, file) for file in os.listdir(pickle_dir) if file.endswith('.pkl')]
-
+    
     # Create plot for each pickle file
     for file in pickle_files:
         bstrpcomp = BootstrapComparison.unpickle(file)
