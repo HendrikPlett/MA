@@ -178,12 +178,19 @@ class Bootstrap(Pickable):
         r2_sorts = []
         # Fill lists by iterating over all causal inference tasks
         for task in self._causal_inference_tasks:
-            est_avg_cons_extensions.append(task.get_average_cons_extension().values)
+            est_avg_cons_extensions.append(task.get_average_cons_extension())
             runtimes.append(task.get_runtime())
             no_cons_extensions.append(task.get_no_consistent_extensions_flag())
             alg_crashed.append(task.get_algorithm_crashed_flag())
             var_sorts.append(task.get_var_sort())
             r2_sorts.append(task.get_r2_sort())
+        # Process lists
+        est_avg_cons_extensions = list(filter(lambda x: x is not None, est_avg_cons_extensions)) # Filter out None values
+        if len(est_avg_cons_extensions) == 0: # Handle case of zero valid consistent extensions across all inference tasks
+            var = list(self._true_dag.columns)
+            d = len(var)
+            est_avg_cons_extensions.append(pd.DataFrame(np.zeros((d,d)), columns=var, index=var))
+        est_avg_cons_extensions = list(map(lambda x: x.values, est_avg_cons_extensions)) # Turn df into np.array
         _avg_avg_cons_extension_np = np.average(est_avg_cons_extensions, axis=0)
         self._avg_avg_cons_extension = pd.DataFrame(
             data=_avg_avg_cons_extension_np,

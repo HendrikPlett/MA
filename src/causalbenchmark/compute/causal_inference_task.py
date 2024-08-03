@@ -144,12 +144,12 @@ class CausalInferenceTask:
         # Handle the case of zero valid consistent extensions
         if len(self._all_cons_extensions) == 0: 
             self._no_cons_extensions = True
-            avg_dag = np.zeros_like(self._true_dag.values) # Alternative: Take PDAG instead of 0 or pass
+            self._average_cons_extension = None
         else: 
             avg_dag = np.average(self._all_cons_extensions, axis=0)
-        self._average_cons_extension = pd.DataFrame(
-            data=avg_dag,
-            index=self._estimated_graph.index,
-            columns=self._estimated_graph.columns
-        )
+            self._average_cons_extension = pd.DataFrame(
+                data=avg_dag,
+                index=self._estimated_graph.index,
+                columns=self._estimated_graph.columns
+            )
 
