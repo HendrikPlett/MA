@@ -42,6 +42,10 @@ _TEXT_POS = {'x': 0.03, 'y':0.97}
 _TEXT_ALIGN = {'verticalalignment': 'top', 'horizontalalignment': 'left'}
 _TEXT_FONTSIZE = 10
 
+# --- Parameters for edge default values
+_EDGE_THRESHOLD_ABS = 0.2
+_EDGE_THRESHOLD_COMP = 0.05
+
 
 class VisBootstrap:
     """Functionality to visualize a single bootstrap."""
@@ -433,7 +437,11 @@ def _vis(axes: Iterable[matplotlib.axes.Axes],
 
     # Add desired edges
     for logic, ax in zip(edge_logics, axes[1:]):
-        edges = Edges(graphs=graphs, logic=logic)
+        if logic in [TP_DIFF, FP_DIFF]:
+            thres = _EDGE_THRESHOLD_COMP
+        else:
+            thres = _EDGE_THRESHOLD_ABS
+        edges = Edges(graphs=graphs, logic=logic, threshold=thres)
         edges.draw_edges(G=G,
                             nodes=nodes,
                             ax_graph=axes[0],
