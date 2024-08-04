@@ -53,6 +53,7 @@ python-utils==3.8.2
 rich==13.7.1
 scikit-learn==1.5.0
 scipy==1.11.4
+seaborn==0.13.2
 sempler==0.2.13
 statsmodels==0.14.2
 tensorboard==2.16.2
