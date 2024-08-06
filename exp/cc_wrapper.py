@@ -1,3 +1,12 @@
+"""
+Wrapper module for the CausalChamber GitHub repository
+https://github.com/juangamella/causal-chamber;
+used to quickly retrieve datasets and TrueDAGs based on 
+- Experimental family
+- Experiment
+- Variables
+"""
+
 # Standard
 import os
 from typing import Tuple, Iterable
@@ -109,14 +118,32 @@ class CCWrapper:
         self._cc_data_path = data_path
 
     def fetch_true_dag(self):
+        """Fetch True DAG based on current attribute assignments."""
         true_dag = graph(
             chamber=self._configuration['chamber'],
             configuration=self._configuration['configuration']
             ).loc[self._variables, self._variables]
         return true_dag
 
-    def fetch_experiments(self, experiments: list[str], sizes = None):
+    def fetch_experiments(self, experiments: list[str], sizes = None) -> list[pd.DataFrame]:
+        """_summary_
 
+        Args:
+            experiments (list[str]): List of experiments to fetch from the 
+                current _exp_family experimental family.
+            sizes (_type_, optional): Whether to retrieve the full datasets (None)
+                or a subset of specified length. Defaults to None.
+
+        Raises:
+            ValueError: If 'sizes' and 'experiments' are not of same length - only
+                checked if 'sizes' is not None.
+            ValueError: If the dataset of the current experimental family ('_exp_family')
+                has not been downloaded yet.
+
+        Returns:
+            list[pd.DataFrame]: One Df for each experiment string passed - reduced to the  
+                current '_variables' setting.
+        """
         # Check validity of input
         if (sizes is not None) and (len(experiments) != len(sizes)):
             raise ValueError("As many sizes as experiments necessary.")
@@ -141,7 +168,7 @@ class CCWrapper:
                     pd.read_csv(path).loc[:, self._variables]
                 )
 
-        return list(experiments_data)
+        return experiments_data
 
     def set_variables(self, variables: list[str]):
         self._variables = variables
