@@ -8,6 +8,9 @@ from config import (
     RED_GREEN_TRUE_DAG,
     RED_UNIFORM_REFERENCE,
     RED_GREEN_UNIFORM_REFERENCE,
+    # Other useful constants
+    OBS_DATA_SIZES,
+    DEFAULT_DATA_SIZE,
     # Benchmarking classes
     BootstrapComparison,
     Bootstrap,
@@ -17,7 +20,6 @@ from config import (
 
 ### ------------------------------------------------------
 # Set default configurations for PC algorithm
-SAMPLE_SIZE = 1000
 ALPHA = 0.1
 
 ### ------------------------------------------------------
@@ -55,7 +57,7 @@ def increase_obs_data_mid_var(sizes: list[int]):
     bstrpcomp.pickle()
 
 def increase_variables():
-    names = ['Few Variables', 'Medium Variables']
+    names = ['Small Var', 'Med Var']
     true_dags = [SMALL_VAR_TRUE_DAG, MID_VAR_TRUE_DAG]
     datas = [SMALL_VAR_UNIFORM_REFERENCE, MID_VAR_UNIFORM_REFERENCE]
     bstrpcomp = BootstrapComparison("PC-IncreaseVariableCount")
@@ -66,7 +68,7 @@ def increase_variables():
                 true_dag=true_dag,
                 algorithm=PC(alpha=ALPHA),
                 data_to_bootstrap_from=data,
-                sample_sizes=[SAMPLE_SIZE],
+                sample_sizes=DEFAULT_DATA_SIZE,
             )
         )
     bstrpcomp.run_comparison()
@@ -84,7 +86,7 @@ def increase_colors():
                 true_dag=true_dag,
                 algorithm=PC(alpha=ALPHA),
                 data_to_bootstrap_from=data,
-                sample_sizes=[SAMPLE_SIZE],
+                sample_sizes=DEFAULT_DATA_SIZE,
             )
         )
     bstrpcomp.run_comparison()
@@ -99,7 +101,7 @@ def increase_alpha(alphas: list):
                 true_dag=MID_VAR_TRUE_DAG,
                 algorithm=PC(alpha=alpha),
                 data_to_bootstrap_from=MID_VAR_UNIFORM_REFERENCE,
-                sample_sizes=[SAMPLE_SIZE],
+                sample_sizes=DEFAULT_DATA_SIZE,
             )
         )
     bstrpcomp.run_comparison()
@@ -107,8 +109,8 @@ def increase_alpha(alphas: list):
 
 
 if __name__ == "__main__":
-    increase_obs_data_small_var(sizes=[100, 200, 400, 800, 1600, 3200, 6400])
-    increase_obs_data_mid_var(sizes=[100, 200, 400, 800, 1600, 3200, 6400])
+    increase_obs_data_small_var(sizes=OBS_DATA_SIZES)
+    increase_obs_data_mid_var(sizes=OBS_DATA_SIZES)
     increase_variables()
     increase_colors()
     increase_alpha(alphas=[0.001, 0.01, 0.05, 0.1, 0.2, 0.4, 0.6])

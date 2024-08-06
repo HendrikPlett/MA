@@ -10,16 +10,13 @@ from config import (
     RED_GREEN_UNIFORM_REFERENCE,
     # Other useful constants
     OBS_DATA_SIZES,
+    DEFAULT_DATA_SIZE,
     # Benchmarking classes
     BootstrapComparison,
     Bootstrap,
     # Algorithm 
     GES
 )
-
-### ------------------------------------------------------
-# Set default configurations for GES algorithm
-SAMPLE_SIZE = 1000
 
 
 ### ------------------------------------------------------
@@ -68,7 +65,7 @@ def increase_variables():
                 true_dag=true_dag,
                 algorithm=GES(),
                 data_to_bootstrap_from=data,
-                sample_sizes=[SAMPLE_SIZE],
+                sample_sizes=DEFAULT_DATA_SIZE,
             )
         )
     bstrpcomp.run_comparison()
@@ -86,7 +83,7 @@ def increase_colors():
                 true_dag=true_dag,
                 algorithm=GES(),
                 data_to_bootstrap_from=data,
-                sample_sizes=[SAMPLE_SIZE],
+                sample_sizes=DEFAULT_DATA_SIZE,
             )
         )
     bstrpcomp.run_comparison()
