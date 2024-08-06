@@ -482,6 +482,6 @@ def _save_figure(fig: Figure, path: str):
     try:
         fig.savefig(path, format="pdf", dpi=300, bbox_inches='tight')
         plt.clf()
-        plt.close(fig)
+        plt.close()
     except Exception as e:
         print(f"Failed to save the figure: {e}")
