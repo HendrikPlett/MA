@@ -480,8 +480,8 @@ def _whiten_axes(ax: matplotlib.axes.Axes) -> matplotlib.axes.Axes:
 def _save_figure(fig: Figure, path: str):
     """Save passed figure under passed path."""
     try:
-        fig.savefig(path, format="pdf", dpi=300, bbox_inches='tight')
+        fig.savefig(path, format="pdf", dpi=150, bbox_inches='tight')
         plt.clf()
-        plt.close()
+        plt.close('all')
     except Exception as e:
         print(f"Failed to save the figure: {e}")
