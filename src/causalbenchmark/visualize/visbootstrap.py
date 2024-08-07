@@ -256,7 +256,7 @@ class VisBootstrapComparison:
         - Title
         """
         if row == col: # Precision case
-            return [TP, FP], (self._titles[row]+_PREC_TITLE)
+            return [FP, TP], (self._titles[row]+_PREC_TITLE)
         elif col > row: # TP diff case
             return [TP_DIFF], (self._titles[row]+" to "+self._titles[col]+_TP_CHANGE_TITLE)
         elif col < row: # FP diff case
@@ -355,7 +355,7 @@ class VisBootstrapComparison:
                 edge_logics = [FP] 
                 title = self._titles[ind]+_FP_TITLE
             elif col == _EV_COL[2]: # Precision 
-                edge_logics = [TP, FP]
+                edge_logics = [FP, TP]
                 title = self._titles[ind]+_PREC_TITLE
             else:
                 raise ValueError("Col not known")
