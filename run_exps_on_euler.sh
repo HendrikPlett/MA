@@ -3,9 +3,9 @@
 ORIGINAL_DIR=$(pwd)
 LOCAL_HOME_PATH="/Users/hendrikplett/Desktop/3. Uni/3.Master_Statistik/4. Semester/Masterarbeit/3. Code"
 
-# Copy MA directory to EULER Cluster
+# Copy MA directory to EULER Cluster, but leave out results and vis directories
 cd "$LOCAL_HOME_PATH"
-rsync -avzh --delete "MA/" "hplett@euler.ethz.ch:/cluster/home/hplett/MA"
+rsync -avzh --delete --exclude="exp/results/" --exclude="exp/vis/" "MA/" "hplett@euler.ethz.ch:/cluster/home/hplett/MA"
 
 # Login to EULER and submit jobs
 ssh hplett@euler.ethz.ch << 'EOF'
