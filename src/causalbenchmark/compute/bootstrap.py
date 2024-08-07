@@ -8,7 +8,8 @@ Class 'BootstrapComparison' to compare Bootstrap instances.
 from typing import Iterable
 import numpy as np
 import pandas as pd
-import pickle
+import multiprocessing
+import copy
 
 # Third party
 
@@ -17,6 +18,13 @@ from .savable import Pickable
 from .algorithms import Algorithm
 from ..util import same_columns, bootstrap_sample, same_order, variables_increase, standardize_dfs
 from .causal_inference_task import CausalInferenceTask
+
+
+def parallel_fit(task: CausalInferenceTask):
+    """Used for multiprocessing."""
+    fitted_task = task.run_task()
+    return fitted_task
+
 
 class Bootstrap(Pickable):
     """
@@ -31,7 +39,8 @@ class Bootstrap(Pickable):
                  data_to_bootstrap_from: Iterable[pd.DataFrame], 
                  sample_sizes: tuple, 
                  standardize_data: bool = False,
-                 nr_bootstraps: int = 100):
+                 nr_bootstraps: int = 100,
+                 CLUSTER_CPUS = False):
         """
         Initialize Bootstrap, passed variables cannot be changed later on.
 
@@ -52,6 +61,9 @@ class Bootstrap(Pickable):
             nr_bootstraps (int): How many bootstrap samples (and thus 
                 CausalInferenceTask instances) will be created. Defaults
                 to 100.
+            CLUSTER_CPUS (int): If an integer is passed, this represents the number
+                of cpus to run the causal_inference_tasks on in parallel. If 'False',
+                all causal_inference_tasks will be run sequentially.
         """
         # --- Check validity of input
         assert len(data_to_bootstrap_from)>=1, "No data passed"
@@ -73,6 +85,7 @@ class Bootstrap(Pickable):
             self._data_to_bootstrap_from = data_to_bootstrap_from
         self._sample_sizes = sample_sizes
         self._nr_bootstraps = nr_bootstraps
+        self._CLUSTER_CPUS = CLUSTER_CPUS
         # --- Provided implicitly
         self._bootstrap_variables = true_dag.columns.to_list()
         # --- Computed later
@@ -152,16 +165,24 @@ class Bootstrap(Pickable):
             )
             self._causal_inference_tasks.append(
                 CausalInferenceTask(
-                    algorithm=self._algorithm,
+                    algorithm=copy.deepcopy(self._algorithm),
                     data=bstr_sample, 
-                    true_dag=self._true_dag
+                    true_dag=self._true_dag.copy()
                 )
             )
 
     def _run_causal_inference_tasks(self):
         """Iterate over each CausalInferenceTasks instance and apply run function."""
-        for task in self._causal_inference_tasks:
-            task.run_task()
+        if self._CLUSTER_CPUS is False:
+            for task in self._causal_inference_tasks:
+                task.run_task()
+        else:
+            if not isinstance(self._CLUSTER_CPUS, int):
+                raise TypeError("CLUSTER_CPUS must be an integer.")
+            num_processes = max(1, self._CLUSTER_CPUS-1)
+            with multiprocessing.Pool(processes=num_processes) as pool:
+                fitted_tasks = pool.map(parallel_fit, self._causal_inference_tasks)
+                self._causal_inference_tasks = fitted_tasks
 
     def _compute_averages(self):
         """
@@ -197,12 +218,32 @@ class Bootstrap(Pickable):
             index=self._bootstrap_variables,
             columns=self._bootstrap_variables
         )
-        self._avg_runtime = float(np.average(runtimes, axis=0))
-        self._avg_no_cons_extensions = float(np.average(no_cons_extensions))
-        self._avg_alg_crashed = float(np.average(alg_crashed))
-        self._avg_var_sort = float(np.average(var_sorts, axis=0))
-        self._avg_r2_sort = float(np.average(r2_sorts, axis=0))
-
+        try:
+            self._avg_runtime = float(np.average(runtimes, axis=0))
+        except Exception as e:
+            print(f"Exception when computing average runtime: {e}")
+            self._avg_runtime = -1
+        try:
+            self._avg_no_cons_extensions = float(np.average(no_cons_extensions))
+        except Exception as e:
+            print(f"Exception when computing average no consistent extensions: {e}")
+            self._avg_no_cons_extensions = -1
+        try:
+            self._avg_alg_crashed = float(np.average(alg_crashed))
+        except Exception as e:
+            print(f"Exception when computing average alg crashed: {e}")
+            self._avg_alg_crashed = -1
+        try:
+            self._avg_var_sort = float(np.average(var_sorts, axis=0))
+        except Exception as e:
+            print(f"Exception when computing avg var sort: {e}")
+            self._avg_var_sort = -1
+        try:
+            self._avg_r2_sort = float(np.average(r2_sorts, axis=0))
+        except Exception as e:
+            print(f"Exception when computing avg r2 sort: {e}")
+            self._avg_r2_sort = -1
+            
     
 class BootstrapComparison(Pickable):
     """
@@ -281,8 +322,8 @@ class BootstrapComparison(Pickable):
         Save variables and true DAG of latest Bootstrap instance, 
             as - by requirements - has the most variables.
         """
-        self._all_var = self._bootstraps[-1].get_bootstrap_variables()
-        self._all_var_true_dag = self._bootstraps[-1].get_true_dag()
+        self._all_var = self._bootstraps[-1].get_bootstrap_variables().copy()
+        self._all_var_true_dag = self._bootstraps[-1].get_true_dag().copy()
 
     def __len__(self):
         """Number of passed Bootstrap instances."""

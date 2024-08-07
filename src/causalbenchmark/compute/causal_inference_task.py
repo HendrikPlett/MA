@@ -78,6 +78,8 @@ class CausalInferenceTask:
             self._estimated_graph = pd.DataFrame(np.zeros((dim, dim)), columns=var, index=var)
             self._runtime = 0
         self._consistent_extensions()
+
+        return self # Enables multiprocessing
         
 
     def get_estimated_graph(self) -> pd.DataFrame:
