@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import multiprocessing
 import copy
+import logging
 
 # Third party
 
@@ -20,9 +21,16 @@ from ..util import same_columns, bootstrap_sample, same_order, variables_increas
 from .causal_inference_task import CausalInferenceTask
 
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+
 def parallel_fit(task: CausalInferenceTask):
     """Used for multiprocessing."""
     fitted_task = task.run_task()
+    logging.info("Fitted a causal_inference_task.")
     return fitted_task
 
 
@@ -171,6 +179,9 @@ class Bootstrap(Pickable):
                 )
             )
 
+        if len(self._causal_inference_tasks) != self._nr_bootstraps:
+            raise ValueError(f"Desired bootstraps: {self._nr_bootstraps}, Created bootstraps: {len(self._causal_inference_tasks)}")
+
     def _run_causal_inference_tasks(self):
         """Iterate over each CausalInferenceTasks instance and apply run function."""
         if self._CLUSTER_CPUS is False:
@@ -183,6 +194,10 @@ class Bootstrap(Pickable):
             with multiprocessing.Pool(processes=num_processes) as pool:
                 fitted_tasks = pool.map(parallel_fit, self._causal_inference_tasks)
                 self._causal_inference_tasks = fitted_tasks
+
+        if len(self._causal_inference_tasks) != self._nr_bootstraps:
+            raise ValueError(f"Desired bootstraps: {self._nr_bootstraps}, Computed bootstraps: {len(self._causal_inference_tasks)}")
+
 
     def _compute_averages(self):
         """
