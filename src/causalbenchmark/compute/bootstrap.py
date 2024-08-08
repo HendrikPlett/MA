@@ -49,7 +49,7 @@ class Bootstrap(Pickable):
                  sample_sizes: tuple, 
                  standardize_data: bool = False,
                  nr_bootstraps: int = 100,
-                 CLUSTER_CPUS = False):
+                 PROCESSES = False):
         """
         Initialize Bootstrap, passed variables cannot be changed later on.
 
@@ -70,9 +70,9 @@ class Bootstrap(Pickable):
             nr_bootstraps (int): How many bootstrap samples (and thus 
                 CausalInferenceTask instances) will be created. Defaults
                 to 100.
-            CLUSTER_CPUS (int): If an integer is passed, this represents the number
-                of cpus to run the causal_inference_tasks on in parallel. If 'False',
-                all causal_inference_tasks will be run sequentially.
+            PROCESSES (int): If an integer is passed, this represents the number
+                of different processes to run the causal_inference_tasks on in parallel. 
+                If 'False', all causal_inference_tasks will be run sequentially.
         """
         # --- Check validity of input
         assert len(data_to_bootstrap_from)>=1, "No data passed"
@@ -94,7 +94,7 @@ class Bootstrap(Pickable):
             self._data_to_bootstrap_from = data_to_bootstrap_from
         self._sample_sizes = sample_sizes
         self._nr_bootstraps = nr_bootstraps
-        self._CLUSTER_CPUS = CLUSTER_CPUS
+        self._PROCESSES = PROCESSES
         # --- Provided implicitly
         self._bootstrap_variables = true_dag.columns.to_list()
         # --- Computed later
@@ -185,14 +185,14 @@ class Bootstrap(Pickable):
 
     def _run_causal_inference_tasks(self):
         """Iterate over each CausalInferenceTasks instance and apply run function."""
-        if self._CLUSTER_CPUS is False:
+        if self._PROCESSES is False:
             for task in self._causal_inference_tasks:
                 task.run_task()
                 logging.info("Fitted a causal_inference_task in sequential fit.")
         else:
-            if not isinstance(self._CLUSTER_CPUS, int):
-                raise TypeError("CLUSTER_CPUS must be an integer.")
-            num_processes = max(1, self._CLUSTER_CPUS-1)
+            if not isinstance(self._PROCESSES, int):
+                raise TypeError("PROCESSES must be an integer.")
+            num_processes = max(1, self._PROCESSES)
             with multiprocessing.Pool(processes=num_processes) as pool:
                 fitted_tasks = pool.map(parallel_fit, self._causal_inference_tasks)
                 self._causal_inference_tasks = fitted_tasks
