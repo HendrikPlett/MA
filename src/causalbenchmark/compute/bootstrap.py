@@ -29,8 +29,9 @@ logging.basicConfig(
 
 def parallel_fit(task: CausalInferenceTask):
     """Used for multiprocessing."""
+    logging.info("Started fitting a causal_inference_task in parallel_fit.")
     fitted_task = task.run_task()
-    logging.info("Fitted a causal_inference_task.")
+    logging.info("Fitted a causal_inference_task in parallel_fit.")
     return fitted_task
 
 
@@ -187,6 +188,7 @@ class Bootstrap(Pickable):
         if self._CLUSTER_CPUS is False:
             for task in self._causal_inference_tasks:
                 task.run_task()
+                logging.info("Fitted a causal_inference_task in sequential fit.")
         else:
             if not isinstance(self._CLUSTER_CPUS, int):
                 raise TypeError("CLUSTER_CPUS must be an integer.")
