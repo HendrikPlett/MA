@@ -7,7 +7,7 @@ sys.path.append(dir_path)
 sys.path.append(src_path)
 
 from causalbenchmark.compute.bootstrap import BootstrapComparison, Bootstrap
-from causalbenchmark.compute.algorithms import Algorithm, PC, UT_IGSP, GES, GIES, GNIES, Golem, NoTears, ICP
+from causalbenchmark.compute.algorithms import Algorithm, PC, UT_IGSP, GES, GIES, GNIES, Golem, NoTears, ICP, VarSortRegress, R2SortRegress
 from cc_wrapper import CCWrapper
 from cc_wrapper import SMALL_VAR, MID_VAR, ALL_VAR # Variable subsets
 
@@ -17,8 +17,7 @@ from cc_wrapper import SMALL_VAR, MID_VAR, ALL_VAR # Variable subsets
 #
 ### ------------------------------------------------------
 
-CLUSTER_CPUS = 51
-NR_BOOTSTRAPS = 100 # Change to 100 later on for MasterThesis
+NR_BOOTSTRAPS = 100 # Used for masterthesis across all plots
 OBS_DATA_COMP_SIZES = [50, 125, 250, 500, 1000, 2000, 4000, 10000]
 DEFAULT_DATA_SIZE = [1000]
 
@@ -96,10 +95,47 @@ RED_GREEN_UNIFORM_REFERENCE = _RED_GREEN_UNIFORM_REFERNECE
 #
 ### ------------------------------------------------------
 
+_INTERVENTIONS_COLORS_MID_VARIABLES = ['blue', 'green', 'red']
+_INTERVENTIONS_COLORS_MID_EXPERIMENTS = [
+    'uniform_blue_mid',
+    'uniform_green_mid',
+    'uniform_red_mid'
+]
 
-# TODO: Fill this
-# Define INTERVENTIONS = [list of variables]
-# Define DATASET = [list of the datasets with the respective interventions]
+_INTERVENTIONS_COLORS_STRONG_VARIABLES = ['blue', 'green', 'red']
+_INTERVENTIONS_COLORS_STRONG_EXPERIMENTS = [
+    'uniform_blue_strong',
+    'uniform_green_strong',
+    'uniform_red_strong'
+]
+
+_INTERVENTIONS_THETA_STRONG_VARIABLES = ['pol_1', 'pol_2']
+_INTERVENTIONS_THETA_STRONG_EXPERIMENTS = [
+    'uniform_pol_1_strong',
+    'uniform_pol_2_strong'
+]
+
+_ccw.set_variables(variables=MID_VAR)
+_INTERVENTIONS_COLORS_MID_DATASETS = _ccw.fetch_experiments(experiments=_INTERVENTIONS_COLORS_MID_EXPERIMENTS)
+_INTERVENTIONS_COLORS_STRONG_DATASETS = _ccw.fetch_experiments(experiments=_INTERVENTIONS_COLORS_STRONG_EXPERIMENTS)
+_INTERVENTIONS_THETA_STRONG_DATASETS = _ccw.fetch_experiments(experiments=_INTERVENTIONS_THETA_STRONG_EXPERIMENTS)
+
+
+# --- Public API ---
+INTERVENTIONS_COLORS_MID_VARIABLES = _INTERVENTIONS_COLORS_MID_VARIABLES
+INTERVENTIONS_COLORS_MID_EXPERIMENTS = _INTERVENTIONS_COLORS_MID_EXPERIMENTS
+INTERVENTIONS_COLORS_MID_DATASETS = _INTERVENTIONS_COLORS_MID_DATASETS
+
+INTERVENTIONS_COLORS_STRONG_VARIABLES = _INTERVENTIONS_COLORS_STRONG_VARIABLES
+INTERVENTIONS_COLORS_STRONG_EXPERIMENTS = _INTERVENTIONS_COLORS_STRONG_EXPERIMENTS
+INTERVENTIONS_COLORS_STRONG_DATASETS = _INTERVENTIONS_COLORS_STRONG_DATASETS
+
+INTERVENTIONS_THETA_STRONG_VARIABLES = _INTERVENTIONS_THETA_STRONG_VARIABLES
+INTERVENTIONS_THETA_STRONG_EXPERIMENTS = _INTERVENTIONS_THETA_STRONG_EXPERIMENTS
+INTERVENTIONS_THETA_STRONG_DATASETS = _INTERVENTIONS_THETA_STRONG_DATASETS
+# --- Public API ---
+
+
 
 
 ### ------------------------------------------------------
@@ -109,7 +145,7 @@ RED_GREEN_UNIFORM_REFERENCE = _RED_GREEN_UNIFORM_REFERNECE
 ### ------------------------------------------------------
 
 
-def increase_obs_data_small_var(alg: Algorithm):
+def increase_obs_data_small_var(alg: Algorithm, processes: int = 50):
     prefix = alg.__class__.__name__
     bstrpcomp = BootstrapComparison(f"{prefix}-SmallVar-IncreaseObservationalData")
     for size in OBS_DATA_COMP_SIZES:
@@ -121,14 +157,14 @@ def increase_obs_data_small_var(alg: Algorithm):
                 data_to_bootstrap_from=SMALL_VAR_UNIFORM_REFERENCE,
                 sample_sizes=[size],
                 nr_bootstraps=NR_BOOTSTRAPS,
-                CLUSTER_CPUS=CLUSTER_CPUS
+                PROCESSES=processes
             )
         )
     bstrpcomp.run_comparison()
     bstrpcomp.pickle()
 
 
-def increase_obs_data_mid_var(alg: Algorithm):
+def increase_obs_data_mid_var(alg: Algorithm, processes: int = 50):
     prefix = alg.__class__.__name__
     bstrpcomp = BootstrapComparison(f"{prefix}-MidVar-IncreaseObservationalData")
     for size in OBS_DATA_COMP_SIZES:
@@ -140,13 +176,13 @@ def increase_obs_data_mid_var(alg: Algorithm):
                 data_to_bootstrap_from=MID_VAR_UNIFORM_REFERENCE,
                 sample_sizes=[size],
                 nr_bootstraps=NR_BOOTSTRAPS,
-                CLUSTER_CPUS=CLUSTER_CPUS
+                PROCESSES=processes
             )
         )
     bstrpcomp.run_comparison()
     bstrpcomp.pickle()
 
-def increase_variables(alg: Algorithm):
+def increase_variables(alg: Algorithm, processes: int = 50):
     names = ['Small Var', 'Med Var']
     true_dags = [SMALL_VAR_TRUE_DAG, MID_VAR_TRUE_DAG]
     datas = [SMALL_VAR_UNIFORM_REFERENCE, MID_VAR_UNIFORM_REFERENCE]
@@ -161,14 +197,14 @@ def increase_variables(alg: Algorithm):
                 data_to_bootstrap_from=data,
                 sample_sizes=DEFAULT_DATA_SIZE,
                 nr_bootstraps=NR_BOOTSTRAPS, 
-                CLUSTER_CPUS=CLUSTER_CPUS
+                PROCESSES=processes
             )
         )
     bstrpcomp.run_comparison()
     bstrpcomp.pickle()
 
 
-def increase_colors(alg: Algorithm):
+def increase_colors(alg: Algorithm, processes: int = 50):
     names = ['Red', 'Red, Green', 'Red, Green, Blue']
     true_dags = [RED_TRUE_DAG, RED_GREEN_TRUE_DAG, MID_VAR_TRUE_DAG]
     datas = [RED_UNIFORM_REFERENCE, RED_GREEN_UNIFORM_REFERENCE, MID_VAR_UNIFORM_REFERENCE]
@@ -183,7 +219,7 @@ def increase_colors(alg: Algorithm):
                 data_to_bootstrap_from=data,
                 sample_sizes=DEFAULT_DATA_SIZE,
                 nr_bootstraps=NR_BOOTSTRAPS, 
-                CLUSTER_CPUS=CLUSTER_CPUS
+                PROCESSES=processes
             )
         )
     bstrpcomp.run_comparison()
@@ -207,7 +243,7 @@ def _instantiate_class(cls, change_param_dict: dict, fix_param_dict: dict = {}) 
     return instances
 
 
-def increase_hyperparameter(cls, change_param_dict: dict, fix_param_dict: dict = {}):
+def increase_hyperparameter(cls, change_param_dict: dict, fix_param_dict: dict = {}, processes: int = 50):
     hyperparm = list(change_param_dict.keys())[0]
     bstrpcomp = BootstrapComparison(f"{cls.__name__}-Increase{hyperparm.capitalize()}")
     alg_instances = _instantiate_class(cls=cls, 
@@ -223,14 +259,14 @@ def increase_hyperparameter(cls, change_param_dict: dict, fix_param_dict: dict =
                 data_to_bootstrap_from=MID_VAR_UNIFORM_REFERENCE,
                 sample_sizes=DEFAULT_DATA_SIZE,
                 nr_bootstraps=NR_BOOTSTRAPS, 
-                CLUSTER_CPUS=CLUSTER_CPUS
+                PROCESSES=processes
             )
         )
     bstrpcomp.run_comparison()
     bstrpcomp.pickle()
 
 
-def standardized_data_comparison(alg: Algorithm):
+def standardized_data_comparison(alg: Algorithm, processes: int = 50):
     bstrpcomp = BootstrapComparison(f"{alg.__class__.__name__}-StandardizeComparison")
     bstrpcomp.add_bootstrap(
         Bootstrap(
@@ -241,7 +277,7 @@ def standardized_data_comparison(alg: Algorithm):
             sample_sizes=DEFAULT_DATA_SIZE,
             standardize_data=False,
             nr_bootstraps=NR_BOOTSTRAPS,
-            CLUSTER_CPUS=CLUSTER_CPUS
+            PROCESSES=processes
         )
     )
     bstrpcomp.add_bootstrap(
@@ -253,7 +289,7 @@ def standardized_data_comparison(alg: Algorithm):
             sample_sizes=DEFAULT_DATA_SIZE,
             standardize_data=True,
             nr_bootstraps=NR_BOOTSTRAPS, 
-            CLUSTER_CPUS=CLUSTER_CPUS
+            PROCESSES=processes
         )
     )
     bstrpcomp.run_comparison()

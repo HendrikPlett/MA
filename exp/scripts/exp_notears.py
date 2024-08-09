@@ -19,6 +19,10 @@ from exp_assistant import (
     NoTears
 )
 
+# NoTEARs constants:
+PROCESSES = 50
+LAMBDA1 = 9
+
 
 def dag_versus_cpdag_comparison(processes: int = 50):
     bstrcomp = BootstrapComparison("NoTears-DAGversusCPDAG")
@@ -26,7 +30,7 @@ def dag_versus_cpdag_comparison(processes: int = 50):
         Bootstrap(
                 name=f"Return DAG",
                 true_dag=MID_VAR_TRUE_DAG,
-                algorithm=NoTears(return_cpdag=False),
+                algorithm=NoTears(return_cpdag=False, lambda1=LAMBDA1),
                 data_to_bootstrap_from=MID_VAR_UNIFORM_REFERENCE,
                 sample_sizes=DEFAULT_DATA_SIZE,
                 nr_bootstraps=NR_BOOTSTRAPS, 
@@ -37,7 +41,7 @@ def dag_versus_cpdag_comparison(processes: int = 50):
         Bootstrap(
                 name=f"Return CPDAG",
                 true_dag=MID_VAR_TRUE_DAG,
-                algorithm=NoTears(return_cpdag=True),
+                algorithm=NoTears(return_cpdag=True, lambda1=LAMBDA1),
                 data_to_bootstrap_from=MID_VAR_UNIFORM_REFERENCE,
                 sample_sizes=DEFAULT_DATA_SIZE,
                 nr_bootstraps=NR_BOOTSTRAPS,
@@ -48,14 +52,12 @@ def dag_versus_cpdag_comparison(processes: int = 50):
     bstrcomp.pickle()
 
 
-# NoTEARs constants:
-PROCESSES = 50
 
 if __name__ == "__main__":
-    increase_obs_data_mid_var(alg=NoTears(), processes=PROCESSES)
-    increase_variables(alg=NoTears(), processes=PROCESSES)
-    increase_colors(alg=NoTears(), processes=PROCESSES)
-    increase_hyperparameter(cls=NoTears, change_param_dict={'lambda1': [0.01, 0.1, 0.5, 1, 2, 4, 8]}, processes=PROCESSES)
-    standardized_data_comparison(alg=NoTears(), processes=PROCESSES)
+    increase_obs_data_mid_var(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
+    increase_variables(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
+    increase_colors(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
+    increase_hyperparameter(cls=NoTears, change_param_dict={'lambda1': [0.1, 1, 3, 9, 27, 81]}, processes=PROCESSES)
+    standardized_data_comparison(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
     dag_versus_cpdag_comparison(processes=PROCESSES)
 
