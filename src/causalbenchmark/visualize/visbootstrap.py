@@ -95,7 +95,7 @@ class VisBootstrap:
             graphs=graphs,
             pos=self._pos,
             latex_transf=self._latex_transf,
-            edge_logics=[TP, FP] # TP and FP for precision
+            edge_logics=[FP, TP] # TP and FP for precision
         )
 
         # Add title
@@ -378,7 +378,7 @@ class VisBootstrapComparison:
                 edge_logics = [FP_DIFF]
                 title = self._titles[row-1]+" to "+self._titles[row]+_FP_CHANGE_TITLE
             elif col == _EV_COL[2]: # Precision 
-                edge_logics = [TP, FP]
+                edge_logics = [FP, TP]
                 ref_graph = self._graphs[row]
                 new_graph = self._graphs[row]
                 title = self._titles[row]+_PREC_TITLE
