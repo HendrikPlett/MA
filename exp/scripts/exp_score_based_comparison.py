@@ -5,12 +5,6 @@ from exp_assistant import (
     # Other useful constants
     NR_BOOTSTRAPS,
     DEFAULT_DATA_SIZE,
-    # Predefined benchmarking functions
-    increase_obs_data_small_var,
-    increase_obs_data_mid_var,
-    increase_variables,
-    increase_colors,
-    standardized_data_comparison,
     # Benchmarking classes
     BootstrapComparison,
     Bootstrap,
