@@ -23,8 +23,8 @@ def test_empirical_distribution_size(processes: int = PROCESSES):
     datasets = [MID_VAR_UNIFORM_REFERENCE_1000_SAMPLE, 
                  MID_VAR_UNIFORM_REFERENCE_2000_SAMPLE,
                  MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE,
-                 MID_VAR_UNIFORM_REFERENCE]
-    names = [1000, 2000, 3000, 10000]
+                 MID_VAR_UNIFORM_REFERENCE] # All lists with one df in them each
+    names = ["1000", "2000", "3000", "10000"]
     for data, name in zip(datasets, names):
         bstrpcomp.add_bootstrap(
             Bootstrap(
