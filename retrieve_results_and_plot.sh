@@ -22,3 +22,6 @@ python3 create_plots.py
 # Delete .pkl files, they are permanently stored only on EULER
 cd ../results
 rm *.pkl
+
+cd "$LOCAL_HOME_PATH"
+cd MA
