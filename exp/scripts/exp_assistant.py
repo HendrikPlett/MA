@@ -86,21 +86,21 @@ RED_GREEN_UNIFORM_REFERENCE = _RED_GREEN_UNIFORM_REFERNECE
 #
 ### ------------------------------------------------------
 
-_MID_INTERVENTIONS_COLORS_VARIABLES = ['red', 'green', 'blue']
+_MID_INTERVENTIONS_COLORS_VARIABLES = [['red'], ['green'], ['blue']]
 _MID_INTERVENTIONS_COLORS_EXPERIMENTS = [
     'uniform_red_mid',
     'uniform_green_mid',
     'uniform_blue_mid'
 ]
 
-_STRONG_INTERVENTIONS_COLORS_VARIABLES = ['red', 'green', 'blue']
+_STRONG_INTERVENTIONS_COLORS_VARIABLES = [['red'], ['green'], ['blue']]
 _STRONG_INTERVENTIONS_COLORS_EXPERIMENTS = [
     'uniform_red_strong',
     'uniform_green_strong',
     'uniform_blue_strong'
 ]
 
-_STRONG_INTERVENTIONS_THETA_VARIABLES = ['pol_1', 'pol_2']
+_STRONG_INTERVENTIONS_THETA_VARIABLES = [['pol_1'], ['pol_2']]
 _STRONG_INTERVENTIONS_THETA_EXPERIMENTS = [
     'uniform_pol_1_strong',
     'uniform_pol_2_strong'
