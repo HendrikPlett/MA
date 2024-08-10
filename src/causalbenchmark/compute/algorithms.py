@@ -457,17 +457,30 @@ class Golem(Algorithm):
     def fit(self, data: Iterable[pd.DataFrame]) -> list[pd.DataFrame, float]:
         """See superclass fit fct. for documentation."""
         pooled_data = pool_dfs(data)
+        common_kwargs = {
+            "X": pooled_data.values,
+            "lambda_1": self._lambda_1,
+            "lambda_2": self._lambda_2,
+            "num_iter": self._num_iter,
+            "learning_rate": self._learning_rate,
+            "seed": self._seed,
+            "checkpoint_iter": self._checkpoint_iter
+        }
+        # Run Golem-EV
         adj_mat_raw = fit_golem(
-            X=pooled_data.values,
-            lambda_1=self._lambda_1,
-            lambda_2=self._lambda_2,
-            equal_variances=self._equal_variances,
-            num_iter=self._num_iter,
-            learning_rate=self._learning_rate,
-            seed=self._seed,
-            checkpoint_iter=self._checkpoint_iter
+            equal_variances=True,
+            **common_kwargs
         )
         adj_mat = postprocess(B=adj_mat_raw, graph_thres=self._postproc_threshold)
+        # If desired, run Golem-NV with EV solution as initilization
+        if self._equal_variances is False:
+            adj_mat_raw = fit_golem(
+                equal_variances=False,
+                B_init=adj_mat, # Initialize NV fit with EV solution
+                **common_kwargs
+            )
+            adj_mat = postprocess(B=adj_mat_raw, graph_thres=self._postproc_threshold)
+    
         var = pooled_data.columns
         return _linear_to_binary(adj_mat, var)
 
