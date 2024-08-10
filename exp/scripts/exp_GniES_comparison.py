@@ -1,19 +1,16 @@
 from exp_assistant import (
     # Precreated datasets/true DAGs
     MID_VAR_TRUE_DAG,
+    MID_VAR_UNIFORM_REFERENCE_2000_SAMPLE,
     MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE,
     MID_INTERVENTIONS_COLORS_VARIABLES,
     MID_INTERVENTIONS_COLORS_DATASETS_MID_VAR,
     STRONG_INTERVENTIONS_COLORS_VARIABLES,
     STRONG_INTERVENTIONS_COLORS_DATASETS_MID_VAR,
+    STRONG_INTERVENTIONS_THETA_VARIABLES,
+    STRONG_INTERVENTIONS_THETA_DATASETS_MID_VAR,
     # Other useful constants
     NR_BOOTSTRAPS,
-    # Predefined benchmarking functions
-    increase_obs_data_small_var,
-    increase_obs_data_mid_var,
-    increase_variables,
-    increase_colors,
-    standardized_data_comparison,
     # Benchmarking classes
     BootstrapComparison,
     Bootstrap,
@@ -21,8 +18,8 @@ from exp_assistant import (
     GES, GNIES, GIES
 )
 
-PROCESSES = 50
-SAMPLE_SIZE = [300]
+PROCESSES = 100
+SAMPLE_SIZE = [1000]
 
 
 def compare_all(obs_ds, interventions, intervention_ds, name, processes = PROCESSES):
@@ -33,7 +30,7 @@ def compare_all(obs_ds, interventions, intervention_ds, name, processes = PROCES
             true_dag=MID_VAR_TRUE_DAG,
             algorithm=GES(),
             data_to_bootstrap_from=obs_ds,
-            sample_sizes=SAMPLE_SIZE,
+            sample_sizes=[SAMPLE_SIZE[0]*len(intervention_ds)], # Ensures each algorithm gets same number of samples
             nr_bootstraps=NR_BOOTSTRAPS,
             PROCESSES=processes
         )
@@ -54,13 +51,12 @@ def compare_all(obs_ds, interventions, intervention_ds, name, processes = PROCES
             name=GIES.__name__,
             true_dag=MID_VAR_TRUE_DAG,
             algorithm=GIES(interventions=interventions),
-            data_to_bootstrap_from=intervention_ds*len(intervention_ds),
-            sample_sizes=SAMPLE_SIZE,
+            data_to_bootstrap_from=intervention_ds,
+            sample_sizes=SAMPLE_SIZE*len(intervention_ds),
             nr_bootstraps=NR_BOOTSTRAPS,
             PROCESSES=processes
         )
     )
-    
     bstrpcomp.run_comparison()
     bstrpcomp.pickle()
 
@@ -68,9 +64,9 @@ def compare_all(obs_ds, interventions, intervention_ds, name, processes = PROCES
 
 if __name__ == "__main__":
     compare_all(
-        obs_ds=MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE,
+        obs_ds=MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE, # List with one df 
         interventions=MID_INTERVENTIONS_COLORS_VARIABLES,
-        intervention_ds=MID_INTERVENTIONS_COLORS_DATASETS_MID_VAR,
+        intervention_ds=MID_INTERVENTIONS_COLORS_DATASETS_MID_VAR, # List with three dfs
         name="MidRGBinterventions"
     )
     compare_all(
@@ -79,3 +75,10 @@ if __name__ == "__main__":
         intervention_ds=STRONG_INTERVENTIONS_COLORS_DATASETS_MID_VAR,
         name="StrongRGBinterventions"
     )
+    compare_all(
+        obs_ds=MID_VAR_UNIFORM_REFERENCE_2000_SAMPLE,
+        interventions=STRONG_INTERVENTIONS_THETA_VARIABLES,
+        intervention_ds=STRONG_INTERVENTIONS_THETA_DATASETS_MID_VAR,
+        name="StrongThetaInterventions"
+    )
+    
