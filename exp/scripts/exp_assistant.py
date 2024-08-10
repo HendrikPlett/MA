@@ -10,6 +10,7 @@ from causalbenchmark.compute.bootstrap import BootstrapComparison, Bootstrap
 from causalbenchmark.compute.algorithms import Algorithm, PC, UT_IGSP, GES, GIES, GNIES, Golem, NoTears, ICP, VarSortRegress, R2SortRegress
 from cc_wrapper import CCWrapper
 from cc_wrapper import SMALL_VAR, MID_VAR, ALL_VAR # Variable subsets
+from cc_wrapper import LATEX_NAME
 
 ### ------------------------------------------------------
 #
@@ -85,18 +86,18 @@ RED_GREEN_UNIFORM_REFERENCE = _RED_GREEN_UNIFORM_REFERNECE
 #
 ### ------------------------------------------------------
 
-_MID_INTERVENTIONS_COLORS_VARIABLES = ['blue', 'green', 'red']
+_MID_INTERVENTIONS_COLORS_VARIABLES = ['red', 'green', 'blue']
 _MID_INTERVENTIONS_COLORS_EXPERIMENTS = [
-    'uniform_blue_mid',
+    'uniform_red_mid',
     'uniform_green_mid',
-    'uniform_red_mid'
+    'uniform_blue_mid'
 ]
 
-_STRONG_INTERVENTIONS_COLORS_VARIABLES = ['blue', 'green', 'red']
+_STRONG_INTERVENTIONS_COLORS_VARIABLES = ['red', 'green', 'blue']
 _STRONG_INTERVENTIONS_COLORS_EXPERIMENTS = [
-    'uniform_blue_strong',
+    'uniform_red_strong',
     'uniform_green_strong',
-    'uniform_red_strong'
+    'uniform_blue_strong'
 ]
 
 _STRONG_INTERVENTIONS_THETA_VARIABLES = ['pol_1', 'pol_2']
@@ -111,8 +112,9 @@ _ccw.set_variables(variables=SMALL_VAR)
 _MID_INTERVENTIONS_COLORS_DATASETS_SMALL_VAR = _ccw.fetch_experiments(experiments=_MID_INTERVENTIONS_COLORS_EXPERIMENTS)
 _STRONG_INTERVENTIONS_COLORS_DATASETS_SMALL_VAR = _ccw.fetch_experiments(experiments=_STRONG_INTERVENTIONS_COLORS_EXPERIMENTS)
 _STRONG_INTERVENTIONS_THETA_DATASETS_SMALL_VAR = _ccw.fetch_experiments(experiments=_STRONG_INTERVENTIONS_THETA_EXPERIMENTS)
-_SMALL_VAR_UNIFORM_REFERENCE_3000_SAMPLE = _ccw.fetch_experiments(experiments=_EXPERIMENT, sizes=[3000]) # Returns list
+_SMALL_VAR_UNIFORM_REFERENCE_1000_SAMPLE = _ccw.fetch_experiments(experiments=_EXPERIMENT, sizes=[1000]) # Returns list
 _SMALL_VAR_UNIFORM_REFERENCE_2000_SAMPLE = _ccw.fetch_experiments(experiments=_EXPERIMENT, sizes=[2000]) # Returns list
+_SMALL_VAR_UNIFORM_REFERENCE_3000_SAMPLE = _ccw.fetch_experiments(experiments=_EXPERIMENT, sizes=[3000]) # Returns list
 
 
 # Medium variable set:
@@ -120,8 +122,9 @@ _ccw.set_variables(variables=MID_VAR)
 _MID_INTERVENTIONS_COLORS_DATASETS_MID_VAR = _ccw.fetch_experiments(experiments=_MID_INTERVENTIONS_COLORS_EXPERIMENTS)
 _STRONG_INTERVENTIONS_COLORS_DATASETS_MID_VAR = _ccw.fetch_experiments(experiments=_STRONG_INTERVENTIONS_COLORS_EXPERIMENTS)
 _STRONG_INTERVENTIONS_THETA_DATASETS_MID_VAR = _ccw.fetch_experiments(experiments=_STRONG_INTERVENTIONS_THETA_EXPERIMENTS)
-_MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE = _ccw.fetch_experiments(experiments=_EXPERIMENT, sizes=[3000]) # Returns list
+_MID_VAR_UNIFORM_REFERENCE_1000_SAMPLE = _ccw.fetch_experiments(experiments=_EXPERIMENT, sizes=[1000]) # Returns list
 _MID_VAR_UNIFORM_REFERENCE_2000_SAMPLE = _ccw.fetch_experiments(experiments=_EXPERIMENT, sizes=[2000]) # Returns list
+_MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE = _ccw.fetch_experiments(experiments=_EXPERIMENT, sizes=[3000]) # Returns list
 
 
 
@@ -144,10 +147,12 @@ STRONG_INTERVENTIONS_THETA_DATASETS_MID_VAR = _STRONG_INTERVENTIONS_THETA_DATASE
 # Uniform reference data, but only 2000/3000 datapoints
 # Needed for comparability because the red,green,blue and theeta1/theta2 intervention datasets 
 # have only 1000 observations
-SMALL_VAR_UNIFORM_REFERENCE_3000_SAMPLE = _SMALL_VAR_UNIFORM_REFERENCE_3000_SAMPLE
+SMALL_VAR_UNIFORM_REFERENCE_1000_SAMPLE = _SMALL_VAR_UNIFORM_REFERENCE_1000_SAMPLE
 SMALL_VAR_UNIFORM_REFERENCE_2000_SAMPLE = _SMALL_VAR_UNIFORM_REFERENCE_2000_SAMPLE
-MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE = _MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE
+SMALL_VAR_UNIFORM_REFERENCE_3000_SAMPLE = _SMALL_VAR_UNIFORM_REFERENCE_3000_SAMPLE
+MID_VAR_UNIFORM_REFERENCE_1000_SAMPLE = _MID_VAR_UNIFORM_REFERENCE_1000_SAMPLE
 MID_VAR_UNIFORM_REFERENCE_2000_SAMPLE = _MID_VAR_UNIFORM_REFERENCE_2000_SAMPLE
+MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE = _MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE
 # --- Public API ---
 
 
