@@ -17,7 +17,7 @@ from exp_assistant import (
     GIES
 )
 
-PROCESSES = 100
+PROCESSES = 50
 SAMPLE_SIZE = [1000]
 
 
