@@ -43,8 +43,8 @@ _TEXT_ALIGN = {'verticalalignment': 'top', 'horizontalalignment': 'left'}
 _TEXT_FONTSIZE = 10
 
 # --- Parameters for edge default values
-_EDGE_THRESHOLD_ABS = 0.2
-_EDGE_THRESHOLD_COMP = 0.05
+_EDGE_THRESHOLD_ABS = 0.2 # 0.2 Normal
+_EDGE_THRESHOLD_COMP = 0.05 # 0.05 Normal
 
 
 class VisBootstrap:
