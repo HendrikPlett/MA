@@ -1,4 +1,4 @@
-# System 
+# Compiler 
 *.pyc
 __pycache__/
 
@@ -10,6 +10,9 @@ test.ipynb
 
 # Data
 exp/cc_data
+
+# VSCode Debugger
+.vscode/
 
 # Simulation results
 exp/results
