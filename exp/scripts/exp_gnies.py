@@ -41,7 +41,7 @@ def compare_interventions(int_datasets, names, processes: int = PROCESSES):
 
 
 def increase_data(datasizes: list[int], processes: int = PROCESSES):
-    bstrpcomp = BootstrapComparison(name="GNIES-IncreaseSampleSize-StrRGB-Interventions")
+    bstrpcomp = BootstrapComparison(name="GNIES-IncreaseSampleSize-midRGB-Interventions")
     for size in datasizes:
         bstrpcomp.add_bootstrap(
             Bootstrap(
