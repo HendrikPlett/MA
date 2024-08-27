@@ -84,11 +84,11 @@ def dag_versus_cpdag_comparison(processes: int = 50):
 
 
 if __name__ == "__main__":
-    #increase_obs_data_mid_var(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
-    #increase_variables(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
-    #increase_colors(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
-    #increase_hyperparameter(cls=NoTears, change_param_dict={'lambda1': [0.1, 1, 3, 9, 27, 81]}, processes=PROCESSES)
-    #standardized_data_comparison(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
-    #dag_versus_cpdag_comparison(processes=PROCESSES)
+    increase_obs_data_mid_var(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
+    increase_variables(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
+    increase_colors(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
+    increase_hyperparameter(cls=NoTears, change_param_dict={'lambda1': [0.1, 1, 3, 9, 27, 81]}, processes=PROCESSES)
+    standardized_data_comparison(alg=NoTears(lambda1=LAMBDA1), processes=PROCESSES)
+    dag_versus_cpdag_comparison(processes=PROCESSES)
     notears_standardized_data_comparison(lambdas_standardized_scale=[0.001, 0.01, 0.1, 1, 10])
 
