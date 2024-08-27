@@ -9,6 +9,7 @@ from exp_assistant import (
     STRONG_INTERVENTIONS_COLORS_DATASETS_MID_VAR,
     STRONG_INTERVENTIONS_THETA_VARIABLES,
     STRONG_INTERVENTIONS_THETA_DATASETS_MID_VAR,
+    MID_VAR_UNIFORM_REFERENCE_1000_SAMPLE,
     # Other useful constants
     NR_BOOTSTRAPS,
     # Benchmarking classes
@@ -80,5 +81,17 @@ if __name__ == "__main__":
         interventions=STRONG_INTERVENTIONS_THETA_VARIABLES,
         intervention_ds=STRONG_INTERVENTIONS_THETA_DATASETS_MID_VAR,
         name="StrongThetaInterventions"
+    )
+    compare_all(
+        obs_ds=MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE,
+        interventions=[[],*MID_INTERVENTIONS_COLORS_VARIABLES[0:2]],
+        intervention_ds=[*MID_VAR_UNIFORM_REFERENCE_1000_SAMPLE,*MID_INTERVENTIONS_COLORS_DATASETS_MID_VAR[0:2]],
+        name="Obs_plus_StrongRGinterventions"
+    )
+    compare_all(
+        obs_ds=MID_VAR_UNIFORM_REFERENCE_3000_SAMPLE,
+        interventions=[[],*STRONG_INTERVENTIONS_THETA_VARIABLES],
+        intervention_ds=[*MID_VAR_UNIFORM_REFERENCE_1000_SAMPLE,*STRONG_INTERVENTIONS_THETA_DATASETS_MID_VAR],
+        name="Obs_plus_StrongThetainterventions"
     )
     
